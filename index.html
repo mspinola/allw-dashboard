@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en"><head>
+<meta name="robots" content="noindex, nofollow"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ALLW All Weather Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f3f5f6; --surface: #fbfcfc; --ink: #0f1720; --ink-2: #4a5561; --muted: #7b8590;
+  --grid: #e2e6e9; --axis: #c5ccd2; --line: rgba(15, 23, 32, 0.10);
+  --accent: #1d5e8c; --wash: rgba(29, 94, 140, 0.07);
+  --long: #2a78d6; --short: #eb6834; --net: #4a3aa7; --comm: #e87ba4; --cot-small: #f2c400; --cot-lf: var(--accent); --cot-am: #e2622e;
+  --equity: #2a78d6; --rates: #eb6834; --fx: #1baf7a; --commodity: #eda100;
+  --up: #0b7a3a; --down: #b3261e;
+  --chip-open: #0b7a3a; --chip-close: #b3261e; --chip-flip: #8a4bd1; --chip-size: #6b7580;
+  --sans: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d1013; --surface: #151a1e; --ink: #eef2f5; --ink-2: #b6bfc8; --muted: #7f8993;
+    --grid: #252c32; --axis: #39424a; --line: rgba(255,255,255,0.09);
+    --accent: #6fb0e0; --wash: rgba(111,176,224,0.09);
+    --long: #3987e5; --short: #d95926; --net: #9085e9; --comm: #d55181; --cot-small: #bfa94a;
+    --equity: #3987e5; --rates: #d95926; --fx: #199e70; --commodity: #c98500;
+    --up: #3fbf6f; --down: #ef6b62;
+    --chip-open: #3fbf6f; --chip-close: #ef6b62; --chip-flip: #b58cf0; --chip-size: #8f99a3;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d1013; --surface: #151a1e; --ink: #eef2f5; --ink-2: #b6bfc8; --muted: #7f8993;
+  --grid: #252c32; --axis: #39424a; --line: rgba(255,255,255,0.09);
+  --accent: #6fb0e0; --wash: rgba(111,176,224,0.09);
+  --long: #3987e5; --short: #d95926; --net: #9085e9; --comm: #d55181; --cot-small: #bfa94a;
+  --equity: #3987e5; --rates: #d95926; --fx: #199e70; --commodity: #c98500;
+  --up: #3fbf6f; --down: #ef6b62;
+  --chip-open: #3fbf6f; --chip-close: #ef6b62; --chip-flip: #b58cf0; --chip-size: #8f99a3;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--page); }
+body { margin: 0; color: var(--ink); font: 14px/1.5 var(--sans); padding-inline: 20px; padding-block: 28px 56px; }
+@media (max-width: 600px) { body { padding-inline: 16px; } }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 22px; }
+.navs { display: grid; gap: 4px; margin-bottom: -8px; }
+nav.sites { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: 12.5px; }
+nav.sites a { color: var(--ink-2); text-decoration: none; padding: 3px 9px; border-radius: 6px; border: 1px solid transparent; white-space: nowrap; }
+nav.sites a:hover { background: var(--wash); color: var(--ink); }
+nav.sites a[aria-current] { color: var(--ink); font-weight: 600; border-color: var(--line); background: var(--surface); }
+nav.sites a:focus-visible, nav.pages a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+nav.sites .div { width: 1px; height: 14px; background: var(--axis); margin: 0 3px; }
+nav.sites .home { margin-left: auto; }
+@media (max-width: 600px) { nav.sites .home { margin-left: 0; } nav.sites .div { display: none; } }
+nav.pages { display: flex; flex-wrap: wrap; gap: 2px 4px; font-size: 13px; border-bottom: 1px solid var(--line); }
+nav.pages a { color: var(--ink-2); text-decoration: none; padding: 5px 10px 6px; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+nav.pages a:hover { color: var(--ink); }
+nav.pages a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+.summary { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--ink-2); max-width: 100ch; }
+.summary b { color: var(--ink); font-weight: 600; }
+.summary span { display: block; }
+.summary span + span { margin-top: 3px; }
+.summary[hidden] { display: none; }
+nav.tabs { display: flex; gap: 4px; margin: 4px 0 10px; border-bottom: 1px solid var(--line); }
+nav.tabs button { font: inherit; font-size: 14px; color: var(--ink-2); background: transparent; border: 0; border-bottom: 2px solid transparent; padding: 6px 12px 7px; margin-bottom: -1px; cursor: pointer; }
+nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+nav.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+nav.tabs .sub { margin-left: auto; align-self: center; color: var(--muted); font-size: 12px; }
+@media (max-width: 600px) { nav.tabs .sub { display: none; } }
+body[data-tab="book"] section.panel[data-tab="context"], body[data-tab="context"] section.panel[data-tab="book"] { display: none; }
+nav.jump { position: sticky; top: 0; z-index: 5; display: flex; gap: 2px; align-items: center; overflow-x: auto; white-space: nowrap;
+  background: var(--page); padding: 7px 0; margin: -8px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; scrollbar-width: none; }
+nav.jump::-webkit-scrollbar { display: none; }
+nav.jump[hidden] { display: none; }
+nav.jump a { color: var(--ink-2); text-decoration: none; padding: 3px 7px; border-radius: 6px; flex: none; }
+nav.jump a:hover { background: var(--wash); color: var(--ink); }
+nav.jump a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+nav.jump .lbl { color: var(--muted); padding-right: 4px; flex: none; }
+section.panel, section.panel h2 { scroll-margin-top: 48px; }
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.eyebrow { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1 { margin: 2px 0 0; font-size: 26px; line-height: 1.15; font-weight: 700; letter-spacing: -.01em; }
+h1 .tk { font-family: var(--mono); font-weight: 600; color: var(--accent); }
+.asof { color: var(--ink-2); font-size: 13px; text-align: right; }
+.asof b { color: var(--ink); font-weight: 600; }
+.asof a { color: var(--ink-2); }
+@media (max-width: 600px) { .asof { text-align: left; } }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.stat { background: var(--surface); padding: 14px 16px; display: grid; gap: 2px; align-content: start; }
+.stat .label { font-size: 12px; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
+.stat .value { font-size: 24px; font-weight: 600; letter-spacing: -.01em; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.stat .delta { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.key { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
+section.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 18px 16px; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; margin-bottom: 10px; }
+h2 { margin: 0; font-size: 15px; font-weight: 650; }
+.sub { color: var(--muted); font-size: 12px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.legend i.ln { height: 2px; width: 14px; border-radius: 1px; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { font-family: var(--sans); fill: var(--muted); font-size: 11px; }
+svg .lbl { fill: var(--ink-2); font-size: 11px; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+svg .gridline { stroke: var(--grid); stroke-width: 1; }
+svg .zero { stroke: var(--axis); stroke-width: 1; }
+svg .hit { fill: transparent; cursor: pointer; }
+svg .hit:hover { fill: var(--wash); }
+svg .hit.sel { fill: var(--wash); }
+svg .nm { fill: var(--ink); font-size: 12px; }
+svg .cmpdot { fill: var(--surface); stroke: var(--ink); stroke-width: 1.6; }
+.legend i.ring { width: 9px; height: 9px; border-radius: 50%; border: 1.6px solid var(--ink); background: transparent; }
+.legend i.tick { width: 2px; height: 12px; border-radius: 1px; background: var(--ink); }
+.tablewrap { overflow-x: auto;
+  /* a table wider than its frame: a shadow at whichever edge has more to scroll to, hidden
+     by the two covers when that end is reached; the first column stays put */
+  background: linear-gradient(to right, var(--surface) 40%, transparent) left center / 36px 100% no-repeat local,
+              linear-gradient(to left, var(--surface) 40%, transparent) right center / 36px 100% no-repeat local,
+              linear-gradient(to right, rgba(0,0,0,.30), transparent) left center / 12px 100% no-repeat scroll,
+              linear-gradient(to left, rgba(0,0,0,.30), transparent) right center / 12px 100% no-repeat scroll; }
+.tablewrap th:first-child, .tablewrap td:first-child { position: sticky; left: 0; background: var(--surface); z-index: 1; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font-weight: 600; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 6px 10px; border-bottom: 1px solid var(--axis); white-space: nowrap; }
+td { padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
+td.m { font-family: var(--mono); font-size: 12.5px; }
+td .n { color: var(--muted); font-size: 12px; margin-left: 8px; }
+@media (max-width: 600px) { td .n, .hm { display: none; } td, th { padding-inline: 5px; } }
+.chip { font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; border: 1px solid currentColor; display: inline-block; min-width: 74px; text-align: center; }
+.chip.open { color: var(--chip-open); } .chip.close { color: var(--chip-close); }
+.chip.flip { color: var(--chip-flip); } .chip.size { color: var(--chip-size); }
+.chip.new { color: var(--chip-open); } .chip.closed { color: var(--chip-close); } .chip.resize { color: var(--chip-size); }
+tr.cash td { color: var(--muted); }
+.vn { color: var(--muted); font-size: 12px; }
+i.sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 8px; }
+.side { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+.empty { color: var(--muted); font-size: 13px; padding: 10px 0; }
+.note { color: var(--muted); font-size: 12px; margin-top: 10px; max-width: 90ch; }
+.note b { color: var(--ink-2); font-weight: 600; }
+.headctl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.toggle { font: inherit; font-size: 12px; color: var(--ink-2); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; margin-top: 10px; }
+.toggle:hover { background: var(--wash); }
+.toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.guide { margin-top: 12px; font-size: 13px; color: var(--ink-2); max-width: 76ch; display: grid; gap: 8px; }
+.guide[hidden] { display: none; }
+.guide p { margin: 0; } .guide b { color: var(--ink); font-weight: 600; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { font: inherit; font-size: 12px; font-family: var(--mono); color: var(--ink-2); background: transparent; border: 0; padding: 3px 10px; cursor: pointer; white-space: nowrap; }
+@media (max-width: 600px) { .seg button { padding: 3px 7px; } }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--wash); color: var(--ink); font-weight: 600; }
+#tip { position: fixed; pointer-events: none; z-index: 10; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.14); padding: 8px 10px; font-size: 12px; min-width: 170px; }
+#tip .t { color: var(--muted); font-size: 11px; margin-bottom: 4px; }
+#tip .rw { display: flex; justify-content: space-between; gap: 14px; align-items: center; }
+#tip .rw b { font-family: var(--mono); font-weight: 600; font-variant-numeric: tabular-nums; }
+#tip .k { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); }
+#tip .k i { width: 10px; height: 10px; display: inline-block; border-radius: 2px; }
+footer { color: var(--muted); font-size: 12px; }
+.indep { color: var(--muted); font-size: 12px; margin-top: 4px; max-width: 60ch; }
+footer a { color: var(--ink-2); }
+svg .grp { fill: var(--ink-2); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
+svg .tk { font-family: var(--mono); fill: var(--ink); font-size: 12px; font-weight: 500; }
+svg .desc { fill: var(--muted); font-size: 11px; }
+svg .val { fill: var(--ink-2); font-size: 11px; font-variant-numeric: tabular-nums; font-family: var(--mono); }
+svg .note { font-family: var(--mono); font-size: 11px; font-variant-numeric: tabular-nums; fill: var(--ink-2); }
+svg .note .w { font-family: var(--sans); font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+svg .note .new { fill: var(--chip-open); } svg .note .closed { fill: var(--chip-close); } svg .note .flip { fill: var(--chip-flip); }
+svg .note .added, svg .note .cut { fill: var(--chip-size); }
+svg .cmpdot { fill: var(--surface); stroke: var(--ink); stroke-width: 1.6; }
+.legend i.ring { width: 9px; height: 9px; border-radius: 50%; border: 1.6px solid var(--ink); background: transparent; }
+.spark-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: start; }
+@media (max-width: 980px) { .spark-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .spark-grid { grid-template-columns: minmax(0, 1fr); } }
+.spark-col { display: grid; align-content: start; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.spark-grp { padding: 8px 12px 6px; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--ink-2); }
+.spark-grp .key { margin-right: 6px; border-radius: 50%; }
+.spark { padding: 9px 12px 7px; display: grid; gap: 2px; border-top: 1px solid var(--line); min-width: 0; cursor: default; }
+.spark .row1, .spark .row2 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.spark .tk { font-family: var(--mono); font-weight: 600; font-size: 13px; }
+.spark .cur { font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.spark .nm { color: var(--muted); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spark .dd { color: var(--muted); font-size: 11px; font-family: var(--mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.spark svg { margin-top: 3px; }
+:root { --nominal: #eb6834; --inflation: #8a4bd1; --cash: #9aa3ab; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --nominal: #d95926; --inflation: #b58cf0; --cash: #6b747d; } }
+:root[data-theme="dark"] { --nominal: #d95926; --inflation: #b58cf0; --cash: #6b747d; }
+td .bar { display: inline-block; height: 9px; border-radius: 2px; vertical-align: middle; }
+.up { color: var(--up); } .down { color: var(--down); }
+/* two panels side by side on a wide screen, stacked below that */
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; align-items: start; }
+@media (max-width: 980px) { .duo { grid-template-columns: minmax(0, 1fr); } }
+/* markets: one card per sleeve, as many columns as fit */
+.mgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: start; }
+@media (max-width: 980px) { .mgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .mgrid { grid-template-columns: minmax(0, 1fr); } }
+.mcard { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.mcard.cash { opacity: .8; }
+.mcard h3 { margin: 0; padding: 7px 10px 5px; display: flex; justify-content: space-between; gap: 8px; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--ink-2); }
+.mcard h3 .t { font-family: var(--mono); letter-spacing: 0; font-size: 12px; color: var(--ink); }
+.mrow { display: grid; grid-template-columns: minmax(0, 1fr) auto 58px; gap: 8px; align-items: baseline; padding: 4px 10px; border-top: 1px solid var(--line); font-size: 12.5px; position: relative; }
+.mrow .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mrow .nm small { color: var(--muted); margin-left: 5px; }
+.mrow .v, .mrow .c { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; font-size: 12px; }
+.mrow .c { color: var(--muted); }
+.mrow .b { position: absolute; left: 0; bottom: 0; height: 2px; }
+table.tight td, table.tight th { padding: 4px 8px; }
+.seg[hidden] { display: none; }
+#perf-table td:first-child { white-space: nowrap; }
+.toggle { margin-top: 8px; }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="navs"><nav class="sites" aria-label="Monitors"><a href="https://trend.bluemagicai.com/">Trend following</a><a href="https://allw.bluemagicai.com/" title="Risk parity" aria-current="page">ALLW</a><a href="https://orr.bluemagicai.com/" title="Equity long/short">ORR</a><span class="div" aria-hidden="true"></span><a href="https://surveys.bluemagicai.com/" title="Sentiment surveys">Surveys</a><a href="https://internals.bluemagicai.com/" title="Market internals">Market</a><a class="home" href="https://bluemagicai.com/">COT Analyzer &rarr;</a></nav></div>
+  <header class="top">
+    <div>
+      <div class="eyebrow">State Street Bridgewater All Weather ETF · Bridgewater model portfolio</div>
+      <h1><span class="tk">ALLW</span> all weather book</h1>
+      <div class="indep">An independent page built from the fund's published holdings. Not affiliated with, endorsed or reviewed by State Street or Bridgewater Associates. Not investment advice.</div>
+    </div>
+    <div class="asof" id="asof"></div>
+  </header>
+
+  <div class="stats" id="stats"></div>
+  <p class="summary" id="summary" hidden></p>
+
+  <div class="duo">
+  <section class="panel" aria-labelledby="h-sleeve">
+    <div class="panel-head">
+      <div><h2 id="h-sleeve">The book by sleeve</h2><div class="sub" id="sleeve-sub">% of net assets · notional for futures and the swap</div></div>
+      <div class="headctl">
+        <div class="legend" id="sleeve-legend"></div>
+        <div class="seg cmp" role="group" aria-label="Compare with"></div>
+      </div>
+    </div>
+    <div id="sleeves"></div>
+    <div class="note" id="sleeve-note"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-perf" id="perf-panel" hidden>
+    <div class="panel-head">
+      <div><h2 id="h-perf">Performance</h2><div class="sub" id="perf-sub"></div></div>
+    </div>
+    <div class="tablewrap"><table class="tight" id="perf-table"></table></div>
+    <div class="note" id="perf-note"></div>
+  </section>
+  </div>
+
+  <section class="panel" aria-labelledby="h-mk">
+    <div class="panel-head">
+      <div><h2 id="h-mk">Exposure by market</h2><div class="sub" id="mk-sub"></div></div>
+      <div class="seg cmp" role="group" aria-label="Compare with"></div>
+    </div>
+    <div class="mgrid" id="markets"></div>
+  </section>
+
+  <div class="duo">
+  <section class="panel" aria-labelledby="h-hist">
+    <div class="panel-head">
+      <div><h2 id="h-hist">Sleeves over time</h2><div class="sub" id="hist-sub"></div></div>
+    </div>
+    <div class="legend" id="hist-legend" style="margin-bottom:6px"></div>
+    <div id="hist"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-size">
+    <div class="panel-head">
+      <div><h2 id="h-size">Fund size and NAV</h2><div class="sub" id="size-sub"></div></div>
+      <div class="seg" id="size-basis" role="group" aria-label="Measure">
+        <button type="button" data-v="tna" aria-pressed="true">Net assets</button><button type="button" data-v="nav" aria-pressed="false">NAV</button>
+      </div>
+    </div>
+    <div id="size"></div>
+  </section>
+  </div>
+
+  <section class="panel" aria-labelledby="h-peer" id="peer-panel" hidden>
+    <div class="panel-head">
+      <div><h2 id="h-peer">Against RPAR and a 60/40</h2><div class="sub" id="peer-sub"></div></div>
+    </div>
+    <div class="legend" id="peer-legend" style="margin-bottom:6px"></div>
+    <div id="peer-chart"></div>
+    <div class="tablewrap"><table class="tight" id="peer-table"></table></div>
+    <div class="note" id="peer-note"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-hold">
+    <div class="panel-head">
+      <div><h2 id="h-hold">Holdings</h2><div class="sub" id="hold-sub"></div></div>
+    </div>
+    <div class="tablewrap"><table class="tight" id="holdings"></table></div>
+    <button type="button" class="toggle" id="hold-more" hidden></button>
+  </section>
+
+  <section class="panel" aria-labelledby="h-how" id="how">
+    <div class="panel-head"><div><h2 id="h-how">How this page reads ALLW</h2></div>
+      <button type="button" class="toggle" id="how-toggle" aria-expanded="false" aria-controls="how-guide" style="margin-top:0">Show</button></div>
+    <div class="guide" id="how-guide" hidden>
+      <p><b>What the fund is.</b> Bridgewater's All Weather portfolio run as an ETF: long-only risk parity, aiming for roughly 10 to 12% volatility. Bridgewater sends a model portfolio each day and State Street trades it. Positions do not flip from long to short. What changes is how big each sleeve is and how much leverage the whole book carries.</p>
+      <p><b>Exposure.</b> Every figure is a share of the fund's total net assets on the same date, from State Street's NAV history. Futures and the commodity swap count at their notional value. In the holdings file their Weight column is margin or profit and loss, not exposure, so it is not used. Everything held outright (TIPS, equity ETFs) counts at market value.</p>
+      <p><b>Sleeves.</b> Four risk sleeves: equities (ETFs plus index futures), nominal government bonds (all futures), inflation-linked bonds (US TIPS held directly) and commodities (gold futures plus a total return swap on the Bloomberg Commodity index). Cash and collateral (a government money fund, T-bills, dollar and other currency balances) backs the futures and is shown beside the sleeves, not counted as exposure.</p>
+      <p><b>Gross and leverage.</b> Gross exposure is the four risk sleeves added up. Leverage is gross over 100%: 1.9x means each dollar in the fund carries about $1.90 of market exposure.</p>
+      <p><b>Balance.</b> The share of gross is a share of NOTIONAL. Risk parity balances risk, and a bond dollar carries much less risk than an equity dollar, so in notional terms the book always looks bond heavy. A move in the shares is the signal, not their level.</p>
+      <p><b>Performance.</b> Total returns as State Street publishes them on the fund's page, at the last month end and the last quarter end, beside the benchmark the fund names (MSCI ACWI IMI, an all-equity index, while the fund holds well under half its exposure in equities). Market price is the NAV times one plus State Street's published premium or discount for the same day.</p>
+      <p><b>History.</b> State Street keeps only the latest holdings file online, so the daily history starts the day archiving began and grows by one file per business day. The file can trail the market by up to two business days. Before that, the book comes from two public records: the fund's quarterly SEC filings (Form N-PORT, every position at each fiscal quarter end in January, April, July and October, public about 60 days later), and the few copies of the holdings file the Internet Archive saved, launch day among them. State Street's asset class exposure sheet adds month ends to the chart: its own totals for the four sleeves and gross, with no cash line and no market detail, so those dates appear only in the chart. On 30 April 2026, the one date both cover, it is within 1.7 points of the SEC filing in every sleeve. The 2025 copies do not give the commodity swap's size, so commodities and gross are left out on those dates. Comparisons with a week, month, quarter or year ago use the nearest book to that date and name it. The NAV history goes back to the fund's launch on 5 March 2025.</p>
+    </div>
+  </section>
+  <footer id="foot"></footer>
+</div>
+<div id="tip" hidden></div>
+<script>
+(function () {
+  const D = {"generated_at":"2026-11-27T18:01","source":"https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-allw.xlsx","nav_source":"https://www.ssga.com/library-content/products/fund-data/etfs/us/navhist-us-en-allw.xlsx","as_of":"2026-11-25","first":"2025-03-05","days":15,"estimated":[],"counts":{"daily":9,"nport":6,"exposure":3},"exposure_source":"https://www.ssga.com/library-content/products/fund-docs/etfs/us/information-schedules/spdr-bridgewater-all-weather-etf-asset-class-exposure.pdf","first_daily":"2025-03-05","unsized":["2025-03-05","2025-03-06","2025-06-24"],"nport_source":"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=S000089966&type=NPORT-P&dateb=&owner=include&count=100","tna":1712102401.9,"tna_estimated":false,"nav":27.659166,"shares":61900000.0,"sleeves":{"equity":0.42977,"nominal":0.71201,"inflation":0.36904,"commodity":0.34752,"cash":0.44899,"other":0.0},"source_of":{"day":"daily","week":"daily","year":"nport"},"sleeves_then":{"day":{"equity":0.43136,"nominal":0.70737,"inflation":0.36446,"commodity":0.34628,"cash":0.45229,"other":0.0},"week":{"equity":0.42899,"nominal":0.7404,"inflation":0.38123,"commodity":0.34585,"cash":0.44484,"other":0.0},"year":{"equity":0.41999,"nominal":0.73753,"inflation":0.32563,"commodity":0.35218,"cash":0.43886,"other":0.0}},"gross":1.85834,"gross_then":{"day":1.84947,"week":1.89646,"year":1.83532},"lookbacks":{"day":"2026-11-24","week":"2026-11-19","year":"2025-10-31"},"markets":[{"market":"SPYM","name":"S&P 500 (SPYM)","sleeve":"equity","instrument":"etf","lines":1,"pct":0.13452,"then":{"day":0.13416,"week":0.13222,"year":0.1358}},{"market":"STOXX50","name":"Euro Stoxx 50","sleeve":"equity","instrument":"future","lines":1,"pct":0.0955,"then":{"day":0.09682,"week":0.09761,"year":0.09086}},{"market":"TOPIX","name":"TOPIX","sleeve":"equity","instrument":"future","lines":1,"pct":0.047,"then":{"day":0.0472,"week":0.04715,"year":0.04608}},{"market":"SPEM","name":"Emerging markets (SPEM)","sleeve":"equity","instrument":"etf","lines":1,"pct":0.04275,"then":{"day":0.04265,"week":0.042,"year":0.04226}},{"market":"FTSE","name":"FTSE 100","sleeve":"equity","instrument":"future","lines":1,"pct":0.04036,"then":{"day":0.04043,"week":0.04,"year":0.03868}},{"market":"SPI","name":"SPI 200","sleeve":"equity","instrument":"future","lines":1,"pct":0.03673,"then":{"day":0.03712,"week":0.03707,"year":0.03744}},{"market":"GXC","name":"China (GXC)","sleeve":"equity","instrument":"etf","lines":1,"pct":0.03291,"then":{"day":0.03297,"week":0.03294,"year":0.02886}},{"market":"TY","name":"US 10Y note","sleeve":"nominal","instrument":"future","lines":1,"pct":0.24723,"then":{"day":0.24507,"week":0.267,"year":0.25622}},{"market":"BUND","name":"Euro Bund","sleeve":"nominal","instrument":"future","lines":1,"pct":0.18954,"then":{"day":0.18872,"week":0.19049,"year":0.18051}},{"market":"US","name":"US T-bond","sleeve":"nominal","instrument":"future","lines":1,"pct":0.1097,"then":{"day":0.1084,"week":0.11993,"year":0.13721}},{"market":"AUS10","name":"Australia 10Y","sleeve":"nominal","instrument":"future","lines":1,"pct":0.09715,"then":{"day":0.09725,"week":0.0967,"year":0.09133}},{"market":"GILT","name":"UK Gilt","sleeve":"nominal","instrument":"future","lines":1,"pct":0.06839,"then":{"day":0.06793,"week":0.06628,"year":0.07225}},{"market":"TIPS","name":"US TIPS","sleeve":"inflation","instrument":"tips","lines":21,"pct":0.36904,"then":{"day":0.36446,"week":0.38123,"year":0.32563}},{"market":"BCOM","name":"BCOM index swap","sleeve":"commodity","instrument":"swap","lines":1,"pct":0.25571,"then":{"day":0.2543,"week":0.25166,"year":0.23385}},{"market":"GC","name":"Gold","sleeve":"commodity","instrument":"future","lines":1,"pct":0.09182,"then":{"day":0.09199,"week":0.09419,"year":0.11833}},{"market":"MMF","name":"Government money fund","sleeve":"cash","instrument":"mmf","lines":1,"pct":0.36086,"then":{"day":0.36702,"week":0.35088,"year":0.37653}},{"market":"TBILL","name":"US T-bills","sleeve":"cash","instrument":"bill","lines":1,"pct":0.05305,"then":{"day":0.05274,"week":0.05217,"year":0.05428}},{"market":"USD","name":"Dollar cash","sleeve":"cash","instrument":"cash","lines":1,"pct":0.03051,"then":{"day":0.03272,"week":0.05029,"year":0.00804}},{"market":"FXBAL","name":"Currency balances","sleeve":"cash","instrument":"fx","lines":5,"pct":0.00457,"then":{"day":-0.00019,"week":-0.0085,"year":0.0}}],"series":{"dates":["2025-03-05","2025-03-06","2025-04-30","2025-06-24","2025-07-31","2025-10-31","2026-01-31","2026-02-28","2026-04-30","2026-06-30","2026-07-17","2026-07-31","2026-10-30","2026-11-19","2026-11-20","2026-11-23","2026-11-24","2026-11-25"],"source":["daily","daily","nport","daily","nport","nport","nport","exposure","nport","exposure","daily","nport","exposure","daily","daily","daily","daily","daily"],"gross":[null,null,1.831,null,1.8344,1.8353,1.8185,1.79,1.8051,1.813,1.8073,1.8155,1.832,1.8965,1.905,1.8499,1.8495,1.8583],"tna":[50.0,49.75,184.49,233.65,266.3,647.65,796.44,null,1293.8,1557.45,1602.56,1614.81,1828.18,1739.6,1717.7,1738.5,1721.61,1712.1],"equity":[0.4341,0.4351,0.432,0.4457,0.4298,0.42,0.4274,0.425,0.4274,0.431,0.4239,0.4282,0.428,0.429,0.4214,0.4268,0.4314,0.4298],"nominal":[0.6815,0.6833,0.7197,0.7178,0.7084,0.7375,0.7262,0.686,0.7022,0.695,0.6954,0.7074,0.709,0.7404,0.7553,0.716,0.7074,0.712],"inflation":[0.311,0.3122,0.3231,0.3332,0.3335,0.3256,0.3542,0.35,0.3457,0.36,0.3579,0.3582,0.373,0.3812,0.3824,0.3619,0.3645,0.369],"commodity":[null,null,0.3562,null,0.3628,0.3522,0.3107,0.329,0.3299,0.327,0.33,0.3217,0.322,0.3459,0.3459,0.3452,0.3463,0.3475],"cash":[0.4243,0.4827,0.459,0.4563,0.4546,0.4389,0.4105,null,0.4401,null,0.4284,0.4281,null,0.4448,0.4558,0.4595,0.4523,0.449]},"holdings":[{"name":"SSI US GOV MONEY MARKET CLASS","ticker":"","kind":"mmf","sleeve":"cash","market_value":617821198.64,"notional":null,"weight":36.379384,"pct":0.360855},{"name":"STATE STREET SPDR PORTFOLIO S+","ticker":"SPYM","kind":"etf","sleeve":"equity","market_value":230318119.46,"notional":null,"weight":13.561903,"pct":0.134524},{"name":"TREASURY BILL 02/27 0.00000","ticker":"","kind":"bill","sleeve":"cash","market_value":90826822.51,"notional":null,"weight":5.348188,"pct":0.05305},{"name":"TSY INFL IX N/B 01/36 1.875","ticker":"","kind":"tips","sleeve":"inflation","market_value":74402234.15,"notional":null,"weight":4.381053,"pct":0.043457},{"name":"TSY INFL IX N/B 07/35 1.875","ticker":"","kind":"tips","sleeve":"inflation","market_value":74058700.94,"notional":null,"weight":4.360825,"pct":0.043256},{"name":"TSY INFL IX N/B 01/35 2.125","ticker":"","kind":"tips","sleeve":"inflation","market_value":73726497.14,"notional":null,"weight":4.341263,"pct":0.043062},{"name":"STATE STREET SPDR PORTFOLIO EM","ticker":"SPEM","kind":"etf","sleeve":"equity","market_value":73190768.25,"notional":null,"weight":4.309718,"pct":0.042749},{"name":"TSY INFL IX N/B 07/34 1.875","ticker":"","kind":"tips","sleeve":"inflation","market_value":68028710.75,"notional":null,"weight":4.005759,"pct":0.039734},{"name":"STATE STREET SPDR S+P CHINA ET","ticker":"GXC","kind":"etf","sleeve":"equity","market_value":56339778.11,"notional":null,"weight":3.317475,"pct":0.032907},{"name":"US DOLLAR","ticker":"","kind":"cash","sleeve":"cash","market_value":52240679.42,"notional":null,"weight":3.076106,"pct":0.030513},{"name":"TSY INFL IX N/B 01/34 1.75","ticker":"","kind":"tips","sleeve":"inflation","market_value":47230499.81,"notional":null,"weight":2.78109,"pct":0.027586},{"name":"TSY INFL IX N/B 07/36 2.375","ticker":"","kind":"tips","sleeve":"inflation","market_value":46742222.12,"notional":null,"weight":2.752339,"pct":0.027301},{"name":"TSY INFL IX N/B 02/44 1.375","ticker":"","kind":"tips","sleeve":"inflation","market_value":27496748.53,"notional":null,"weight":1.619101,"pct":0.01606},{"name":"TSY INFL IX N/B 02/45 0.75","ticker":"","kind":"tips","sleeve":"inflation","market_value":24396742.57,"notional":null,"weight":1.436562,"pct":0.01425},{"name":"TSY INFL IX N/B 02/56 2.375","ticker":"","kind":"tips","sleeve":"inflation","market_value":21252337.67,"notional":null,"weight":1.251409,"pct":0.012413},{"name":"TSY INFL IX N/B 02/55 2.375","ticker":"","kind":"tips","sleeve":"inflation","market_value":20299440.82,"notional":null,"weight":1.195299,"pct":0.011856},{"name":"TSY INFL IX N/B 02/54 2.125","ticker":"","kind":"tips","sleeve":"inflation","market_value":18965341.78,"notional":null,"weight":1.116743,"pct":0.011077},{"name":"TSY INFL IX N/B 02/53 1.5","ticker":"","kind":"tips","sleeve":"inflation","market_value":17713378.56,"notional":null,"weight":1.043023,"pct":0.010346},{"name":"TSY INFL IX N/B 02/43 0.625","ticker":"","kind":"tips","sleeve":"inflation","market_value":17294390.08,"notional":null,"weight":1.018352,"pct":0.010101},{"name":"TSY INFL IX N/B 02/47 0.875","ticker":"","kind":"tips","sleeve":"inflation","market_value":16460420.59,"notional":null,"weight":0.969245,"pct":0.009614},{"name":"TSY INFL IX N/B 02/42 0.75","ticker":"","kind":"tips","sleeve":"inflation","market_value":14266152.41,"notional":null,"weight":0.840039,"pct":0.008333},{"name":"TSY INFL IX N/B 02/46 1","ticker":"","kind":"tips","sleeve":"inflation","market_value":13586727.82,"notional":null,"weight":0.800032,"pct":0.007936},{"name":"TSY INFL IX N/B 02/50 0.25","ticker":"","kind":"tips","sleeve":"inflation","market_value":13347293.19,"notional":null,"weight":0.785933,"pct":0.007796},{"name":"TSY INFL IX N/B 02/52 0.125","ticker":"","kind":"tips","sleeve":"inflation","market_value":11839207.93,"notional":null,"weight":0.697132,"pct":0.006915},{"name":"TSY INFL IX N/B 02/48 1","ticker":"","kind":"tips","sleeve":"inflation","market_value":10610610.49,"notional":null,"weight":0.624788,"pct":0.006197},{"name":"TSY INFL IX N/B 02/49 1","ticker":"","kind":"tips","sleeve":"inflation","market_value":10386960.93,"notional":null,"weight":0.611619,"pct":0.006067},{"name":"TSY INFL IX N/B 02/51 0.125","ticker":"","kind":"tips","sleeve":"inflation","market_value":9731748.53,"notional":null,"weight":0.573038,"pct":0.005684},{"name":"EURO CURRENCY","ticker":"","kind":"fx","sleeve":"cash","market_value":7742378.91,"notional":null,"weight":0.455897,"pct":0.004522},{"name":"AUST 10Y BOND FUT DEC26","ticker":"XMZ6","kind":"future","sleeve":"nominal","market_value":166334880.45,"notional":166334880.45,"weight":0.418929,"pct":0.097152},{"name":"JAPANESE YEN","ticker":"","kind":"fx","sleeve":"cash","market_value":4161517.5,"notional":null,"weight":0.245044,"pct":0.002431},{"name":"POUND STERLING","ticker":"","kind":"fx","sleeve":"cash","market_value":3076897.61,"notional":null,"weight":0.181178,"pct":0.001797},{"name":"US 10YR NOTE (CBT)MAR27","ticker":"TYH7","kind":"future","sleeve":"nominal","market_value":423279828.13,"notional":423279828.13,"weight":0.103655,"pct":0.247228},{"name":"US LONG BOND(CBT) MAR27","ticker":"USH7","kind":"future","sleeve":"nominal","market_value":187813125.0,"notional":187813125.0,"weight":0.075112,"pct":0.109697},{"name":"LONG GILT FUTURE MAR27","ticker":"G H7","kind":"future","sleeve":"nominal","market_value":117090381.64,"notional":117090381.64,"weight":0.065022,"pct":0.06839},{"name":"CANADIAN DOLLAR","ticker":"","kind":"fx","sleeve":"cash","market_value":7.43,"notional":null,"weight":0.0,"pct":0.0},{"name":"EURO-BUND FUTURE MAR27","ticker":"RXH7","kind":"future","sleeve":"nominal","market_value":324511373.85,"notional":324511373.85,"weight":-0.010356,"pct":0.18954},{"name":"SPI 200 FUTURES DEC26","ticker":"XPZ6","kind":"future","sleeve":"equity","market_value":62893620.93,"notional":62893620.93,"weight":-0.031533,"pct":0.036735},{"name":"FTSE 100 IDX FUT DEC26","ticker":"Z Z6","kind":"future","sleeve":"equity","market_value":69098325.65,"notional":69098325.65,"weight":-0.125632,"pct":0.040359},{"name":"TOPIX INDX FUTR DEC26","ticker":"TPZ6","kind":"future","sleeve":"equity","market_value":80468692.07,"notional":80468692.07,"weight":-0.356399,"pct":0.047},{"name":"AUSTRALIAN DOLLAR","ticker":"","kind":"fx","sleeve":"cash","market_value":-7158286.27,"notional":null,"weight":-0.421504,"pct":-0.004181},{"name":"EURO STOXX 50 DEC26","ticker":"VGZ6","kind":"future","sleeve":"equity","market_value":163501768.73,"notional":163501768.73,"weight":-0.569916,"pct":0.095498},{"name":"GOLD 100 OZ FUTR FEB27","ticker":"GCG7","kind":"future","sleeve":"commodity","market_value":157198860.0,"notional":157198860.0,"weight":-0.907804,"pct":0.091816},{"name":"TRS USD BCOMTR","ticker":"","kind":"swap","sleeve":"commodity","market_value":-42037605.88,"notional":437796561.99,"weight":-2.475315,"pct":0.255707}],"navhist":{"dates":["2025-03-05","2025-03-06","2025-03-07","2025-03-10","2025-03-11","2025-03-12","2025-03-13","2025-03-14","2025-03-17","2025-03-18","2025-03-19","2025-03-20","2025-03-21","2025-03-24","2025-03-25","2025-03-26","2025-03-27","2025-03-28","2025-03-31","2025-04-01","2025-04-02","2025-04-03","2025-04-04","2025-04-07","2025-04-08","2025-04-09","2025-04-10","2025-04-11","2025-04-14","2025-04-15","2025-04-16","2025-04-17","2025-04-21","2025-04-22","2025-04-23","2025-04-24","2025-04-25","2025-04-28","2025-04-29","2025-04-30","2025-05-01","2025-05-02","2025-05-05","2025-05-06","2025-05-07","2025-05-08","2025-05-09","2025-05-12","2025-05-13","2025-05-14","2025-05-15","2025-05-16","2025-05-19","2025-05-20","2025-05-21","2025-05-22","2025-05-23","2025-05-27","2025-05-28","2025-05-29","2025-05-30","2025-06-02","2025-06-03","2025-06-04","2025-06-05","2025-06-06","2025-06-09","2025-06-10","2025-06-11","2025-06-12","2025-06-13","2025-06-16","2025-06-17","2025-06-18","2025-06-20","2025-06-23","2025-06-24","2025-06-25","2025-06-26","2025-06-27","2025-06-30","2025-07-01","2025-07-02","2025-07-03","2025-07-07","2025-07-08","2025-07-09","2025-07-10","2025-07-11","2025-07-14","2025-07-15","2025-07-16","2025-07-17","2025-07-18","2025-07-21","2025-07-22","2025-07-23","2025-07-24","2025-07-25","2025-07-28","2025-07-29","2025-07-30","2025-07-31","2025-08-01","2025-08-04","2025-08-05","2025-08-06","2025-08-07","2025-08-08","2025-08-11","2025-08-12","2025-08-13","2025-08-14","2025-08-15","2025-08-18","2025-08-19","2025-08-20","2025-08-21","2025-08-22","2025-08-25","2025-08-26","2025-08-27","2025-08-28","2025-08-29","2025-09-02","2025-09-03","2025-09-04","2025-09-05","2025-09-08","2025-09-09","2025-09-10","2025-09-11","2025-09-12","2025-09-15","2025-09-16","2025-09-17","2025-09-18","2025-09-19","2025-09-22","2025-09-23","2025-09-24","2025-09-25","2025-09-26","2025-09-29","2025-09-30","2025-10-01","2025-10-02","2025-10-03","2025-10-06","2025-10-07","2025-10-08","2025-10-09","2025-10-10","2025-10-13","2025-10-14","2025-10-15","2025-10-16","2025-10-17","2025-10-20","2025-10-21","2025-10-22","2025-10-23","2025-10-24","2025-10-27","2025-10-28","2025-10-29","2025-10-30","2025-10-31","2025-11-03","2025-11-04","2025-11-05","2025-11-06","2025-11-07","2025-11-10","2025-11-11","2025-11-12","2025-11-13","2025-11-14","2025-11-17","2025-11-18","2025-11-19","2025-11-20","2025-11-21","2025-11-24","2025-11-25","2025-11-26","2025-11-28","2025-12-01","2025-12-02","2025-12-03","2025-12-04","2025-12-05","2025-12-08","2025-12-09","2025-12-10","2025-12-11","2025-12-12","2025-12-15","2025-12-16","2025-12-17","2025-12-18","2025-12-19","2025-12-22","2025-12-23","2025-12-24","2025-12-26","2025-12-29","2025-12-30","2025-12-31","2026-01-02","2026-01-05","2026-01-06","2026-01-07","2026-01-08","2026-01-09","2026-01-12","2026-01-13","2026-01-14","2026-01-15","2026-01-16","2026-01-20","2026-01-21","2026-01-22","2026-01-23","2026-01-26","2026-01-27","2026-01-28","2026-01-29","2026-01-30","2026-02-02","2026-02-03","2026-02-04","2026-02-05","2026-02-06","2026-02-09","2026-02-10","2026-02-11","2026-02-12","2026-02-13","2026-02-17","2026-02-18","2026-02-19","2026-02-20","2026-02-23","2026-02-24","2026-02-25","2026-02-26","2026-02-27","2026-03-02","2026-03-03","2026-03-04","2026-03-05","2026-03-06","2026-03-09","2026-03-10","2026-03-11","2026-03-12","2026-03-13","2026-03-16","2026-03-17","2026-03-18","2026-03-19","2026-03-20","2026-03-23","2026-03-24","2026-03-25","2026-03-26","2026-03-27","2026-03-30","2026-03-31","2026-04-01","2026-04-02","2026-04-06","2026-04-07","2026-04-08","2026-04-09","2026-04-10","2026-04-13","2026-04-14","2026-04-15","2026-04-16","2026-04-17","2026-04-20","2026-04-21","2026-04-22","2026-04-23","2026-04-24","2026-04-27","2026-04-28","2026-04-29","2026-04-30","2026-05-01","2026-05-04","2026-05-05","2026-05-06","2026-05-07","2026-05-08","2026-05-11","2026-05-12","2026-05-13","2026-05-14","2026-05-15","2026-05-18","2026-05-19","2026-05-20","2026-05-21","2026-05-22","2026-05-26","2026-05-27","2026-05-28","2026-05-29","2026-06-01","2026-06-02","2026-06-03","2026-06-04","2026-06-05","2026-06-08","2026-06-09","2026-06-10","2026-06-11","2026-06-12","2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-22","2026-06-23","2026-06-24","2026-06-25","2026-06-26","2026-06-29","2026-06-30","2026-07-01","2026-07-02","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24","2026-07-27","2026-07-28","2026-07-29","2026-07-30","2026-07-31","2026-08-03","2026-08-04","2026-08-05","2026-08-06","2026-08-07","2026-08-10","2026-08-11","2026-08-12","2026-08-13","2026-08-14","2026-08-17","2026-08-18","2026-08-19","2026-08-20","2026-08-21","2026-08-24","2026-08-25","2026-08-26","2026-08-27","2026-08-28","2026-08-31","2026-09-01","2026-09-02","2026-09-03","2026-09-04","2026-09-08","2026-09-09","2026-09-10","2026-09-11","2026-09-14","2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22","2026-09-23","2026-09-24","2026-09-25","2026-09-28","2026-09-29","2026-09-30","2026-10-01","2026-10-02","2026-10-05","2026-10-06","2026-10-07","2026-10-08","2026-10-09","2026-10-12","2026-10-13","2026-10-14","2026-10-15","2026-10-16","2026-10-19","2026-10-20","2026-10-21","2026-10-22","2026-10-23","2026-10-26","2026-10-27","2026-10-28","2026-10-29","2026-10-30","2026-11-02","2026-11-03","2026-11-04","2026-11-05","2026-11-06","2026-11-09","2026-11-10","2026-11-11","2026-11-12","2026-11-13","2026-11-16","2026-11-17","2026-11-18","2026-11-19","2026-11-20","2026-11-23","2026-11-24","2026-11-25"],"nav":[25.0,24.8772,24.8374,24.7716,24.6102,24.593,24.6885,24.8028,24.9894,25.0498,25.2165,25.1866,25.0673,24.9773,25.0524,24.9463,24.9618,25.0593,25.1358,25.3106,25.3099,24.9881,24.2162,23.3314,23.2136,23.603,23.671,23.8157,24.1117,24.1972,24.3575,24.4048,24.2263,24.4812,24.5488,24.9239,24.9655,25.127,25.1793,25.1008,24.9621,25.0427,25.0553,25.2116,25.1906,25.0355,25.1611,25.0384,25.141,24.9819,25.084,25.1151,25.1186,25.2349,25.0037,24.9742,25.1095,25.3087,25.102,25.2648,25.2284,25.3536,25.3917,25.6143,25.5263,25.4161,25.4656,25.5401,25.6142,25.8024,25.7495,25.7681,25.8637,25.9191,25.8172,25.8255,25.8181,25.7881,25.925,25.8881,25.9627,26.016,26.0407,25.9956,25.8196,25.8076,25.931,25.9891,25.8822,25.8892,25.7692,25.862,25.9829,26.0582,26.2317,26.3226,26.2652,26.2436,26.1668,26.0588,26.2887,26.1531,25.9809,26.0195,26.2273,26.2567,26.2702,26.3521,26.3753,26.2698,26.2575,26.4836,26.3181,26.2716,26.2276,26.1937,26.3164,26.2956,26.633,26.5564,26.5362,26.5942,26.7423,26.7247,26.6549,26.8225,26.8902,27.129,27.3782,27.3291,27.4197,27.5565,27.5285,27.7149,27.7586,27.6428,27.4997,27.4392,27.4847,27.6307,27.5468,27.4694,27.5802,27.7751,27.7883,27.9441,27.999,28.0346,28.085,28.1745,28.3696,28.1242,27.9564,28.3247,28.3668,28.52,28.7794,28.563,28.9986,28.7516,28.7171,28.8989,28.8853,28.876,28.8305,28.7272,28.5889,28.5938,28.6302,28.4668,28.3919,28.4155,28.3916,28.7716,28.9315,29.1074,28.888,28.5409,28.4482,28.2972,28.2598,28.1697,28.2393,28.4091,28.5913,28.839,28.9781,28.8186,28.7341,28.8395,28.8422,28.8224,28.573,28.5167,28.5926,28.7627,28.5482,28.5628,28.4472,28.4873,28.5975,28.6447,28.7498,28.9583,29.0395,29.1455,27.6138,27.757,27.4996,27.4734,27.8741,28.0217,27.9973,27.8879,28.1163,28.3472,28.418,28.5456,28.5045,28.3117,28.2115,28.4974,28.6394,28.8113,29.0617,29.0972,29.2678,29.3582,28.7004,28.3084,28.6443,28.6759,28.591,28.8432,29.0631,29.1401,29.25,29.1068,29.2414,29.0979,29.3494,29.3657,29.5498,29.666,29.6942,29.8706,29.8767,30.0989,29.9622,29.5012,29.5008,29.3615,29.5382,29.5646,29.621,29.5012,29.364,29.1947,29.2342,29.4497,29.2591,28.8228,28.3113,28.0485,28.0848,28.4956,28.0794,28.0432,28.3217,28.645,28.9709,29.0135,29.0606,29.0029,29.3618,29.3681,29.3291,29.4474,29.7309,29.7222,29.6978,29.8749,29.8376,29.6503,29.803,29.7277,29.8047,29.7413,29.6686,29.5783,29.8111,29.9061,29.7456,29.8078,30.1036,30.0447,30.1547,30.1952,30.0555,30.1514,30.162,29.5866,29.627,29.5091,29.6689,29.6832,29.7994,29.9785,29.8782,30.0153,30.0897,30.021,30.185,29.9803,29.9501,29.3901,29.2964,29.2294,28.995,29.1903,29.4222,29.6954,29.6763,29.6052,29.6123,29.3831,29.0967,29.0524,29.2442,29.1869,29.2345,29.2205,29.1184,29.1499,29.4605,29.2481,29.0249,29.2095,29.1994,29.0506,29.2344,29.3314,29.1453,29.1905,29.0954,29.2825,29.3925,29.1413,29.1393,29.15,29.1365,29.0921,29.1674,29.0957,29.1938,29.3999,29.605,29.5585,29.7927,29.8626,29.8791,29.9567,29.9862,29.9057,29.8983,29.7956,30.1005,30.1129,30.1555,30.1706,30.3295,30.305,30.3105,30.1479,30.0534,29.9564,29.9114,30.1609,30.108,30.0442,29.8915,29.6511,29.5013,29.4397,29.3798,29.3886,29.6494,29.464,29.7135,29.6795,29.2866,29.0605,29.0438,28.6529,28.5746,28.5744,28.5919,28.5748,28.5893,28.778,28.6085,28.6582,28.8341,28.869,28.9403,28.8625,29.1109,29.1553,28.9699,29.0229,29.0404,29.1584,29.0663,29.145,29.1815,29.1135,29.1669,29.0187,28.97,28.7799,29.0263,28.9839,28.8368,29.0054,28.6791,28.7785,28.4827,28.2979,28.0179,27.9022,27.6972,27.5253,27.2867,27.6831,27.5899,27.6592],"tna":[50.0,49.75,49.67,49.54,49.22,49.19,53.08,53.33,66.22,68.89,69.35,70.52,77.71,77.43,77.66,77.33,78.63,78.94,109.34,115.16,120.22,123.69,124.71,120.16,125.35,129.82,130.19,141.7,143.46,148.81,149.8,163.51,162.32,166.47,171.84,178.21,178.5,179.66,182.55,184.49,185.97,186.57,186.66,187.83,187.67,186.51,189.97,191.54,196.1,194.86,195.66,195.9,198.44,199.36,200.03,199.79,200.88,202.47,200.82,202.12,203.09,204.1,204.4,208.76,208.04,209.68,210.09,210.71,213.88,218.03,217.58,224.18,225.01,228.09,231.06,231.14,233.65,237.25,244.99,244.64,245.35,245.85,246.08,248.26,246.58,246.46,247.64,250.8,249.76,249.83,248.67,254.74,255.93,256.67,258.38,259.28,261.34,266.37,268.21,267.1,269.46,268.07,266.3,266.7,284.57,291.45,294.23,295.14,295.4,294.22,296.71,300.59,303.97,303.44,302.93,305.16,315.8,318.18,326.25,325.32,325.07,325.78,330.27,330.05,331.85,333.94,334.78,347.25,355.92,360.74,367.42,373.39,378.52,389.39,394.17,392.53,401.49,406.1,406.77,413.08,414.58,413.41,423.36,429.13,429.33,435.93,440.98,452.76,459.19,464.88,472.35,471.08,487.84,505.6,513.44,521.92,535.3,536.98,562.57,579.34,588.7,608.32,619.59,629.5,635.71,639.18,640.39,647.65,651.34,647.62,645.92,652.14,651.59,660.31,669.76,673.84,668.76,666.43,665.69,662.16,661.28,659.17,660.8,664.77,669.04,674.83,678.09,674.35,672.38,674.84,674.91,674.44,668.61,667.29,669.07,673.05,668.03,671.23,668.51,672.3,674.9,676.02,678.5,683.42,685.33,692.21,655.83,663.39,662.74,666.23,682.92,686.53,692.93,704.17,716.97,728.52,730.34,733.62,741.12,736.1,733.5,746.63,756.08,760.62,786.12,787.08,797.55,814.69,796.44,789.81,813.5,820.13,824.85,836.45,847.19,853.8,876.04,890.67,903.56,928.22,937.71,948.51,954.46,964.14,973.97,985.73,988.92,1017.34,1051.67,1047.29,1050.23,1048.21,1054.51,1067.28,1069.32,1093.02,1096.75,1126.91,1173.75,1203.02,1223.03,1232.17,1218.8,1211.69,1218.88,1236.71,1218.64,1194.64,1202.26,1203.09,1205.19,1206.96,1208.92,1206.52,1221.45,1221.71,1225.96,1230.9,1242.75,1245.36,1244.34,1256.24,1262.13,1254.21,1260.67,1272.35,1275.64,1272.93,1269.82,1274.82,1293.8,1303.9,1307.32,1356.25,1396.81,1394.08,1438.38,1453.9,1448.67,1471.39,1474.92,1449.74,1465.06,1459.22,1467.12,1488.61,1504.87,1516.91,1511.84,1518.77,1522.54,1519.06,1527.36,1523.0,1525.96,1497.42,1492.65,1489.24,1480.2,1496.0,1507.89,1521.89,1532.78,1529.11,1535.4,1536.73,1524.67,1532.51,1542.63,1545.45,1547.97,1557.45,1552.01,1556.61,1579.09,1573.55,1561.54,1571.47,1570.93,1584.71,1597.66,1602.96,1592.79,1602.56,1597.34,1607.61,1616.59,1602.77,1608.49,1609.08,1608.33,1605.88,1618.79,1614.81,1620.25,1631.7,1646.04,1643.45,1656.47,1660.36,1661.28,1671.58,1673.23,1683.69,1683.28,1677.49,1694.66,1695.36,1702.28,1707.65,1716.65,1747.08,1754.98,1751.59,1785.17,1788.4,1785.71,1800.61,1803.47,1810.16,1808.44,1793.89,1798.11,1803.18,1802.45,1805.93,1821.96,1813.51,1840.75,1838.65,1814.31,1803.2,1802.17,1780.78,1793.06,1793.05,1799.86,1791.64,1795.41,1807.26,1799.47,1802.6,1816.55,1818.75,1823.24,1812.56,1828.16,1835.33,1826.55,1829.89,1831.0,1838.44,1835.54,1840.5,1842.81,1838.52,1837.51,1828.18,1825.11,1813.14,1828.66,1825.99,1823.93,1834.59,1813.95,1820.24,1801.53,1789.84,1770.73,1763.42,1750.46,1739.6,1717.7,1738.5,1721.61,1712.1]},"names":{"equity":"Equities","nominal":"Nominal bonds","inflation":"Inflation-linked bonds","commodity":"Commodities","cash":"Cash and collateral"},"peers":{"from":"2025-03-06","to":"2026-11-27","dates":["2025-03-06","2025-03-07","2025-03-10","2025-03-11","2025-03-12","2025-03-13","2025-03-14","2025-03-17","2025-03-18","2025-03-19","2025-03-20","2025-03-21","2025-03-24","2025-03-25","2025-03-26","2025-03-27","2025-03-28","2025-03-31","2025-04-01","2025-04-02","2025-04-03","2025-04-04","2025-04-07","2025-04-08","2025-04-09","2025-04-10","2025-04-11","2025-04-14","2025-04-15","2025-04-16","2025-04-17","2025-04-21","2025-04-22","2025-04-23","2025-04-24","2025-04-25","2025-04-28","2025-04-29","2025-04-30","2025-05-01","2025-05-02","2025-05-05","2025-05-06","2025-05-07","2025-05-08","2025-05-09","2025-05-12","2025-05-13","2025-05-14","2025-05-15","2025-05-16","2025-05-19","2025-05-20","2025-05-21","2025-05-22","2025-05-23","2025-05-27","2025-05-28","2025-05-29","2025-05-30","2025-06-02","2025-06-03","2025-06-04","2025-06-05","2025-06-06","2025-06-09","2025-06-10","2025-06-11","2025-06-12","2025-06-13","2025-06-16","2025-06-17","2025-06-18","2025-06-20","2025-06-23","2025-06-24","2025-06-25","2025-06-26","2025-06-27","2025-06-30","2025-07-01","2025-07-02","2025-07-03","2025-07-07","2025-07-08","2025-07-09","2025-07-10","2025-07-11","2025-07-14","2025-07-15","2025-07-16","2025-07-17","2025-07-18","2025-07-21","2025-07-22","2025-07-23","2025-07-24","2025-07-25","2025-07-28","2025-07-29","2025-07-30","2025-07-31","2025-08-01","2025-08-04","2025-08-05","2025-08-06","2025-08-07","2025-08-08","2025-08-11","2025-08-12","2025-08-13","2025-08-14","2025-08-15","2025-08-18","2025-08-19","2025-08-20","2025-08-21","2025-08-22","2025-08-25","2025-08-26","2025-08-27","2025-08-28","2025-08-29","2025-09-02","2025-09-03","2025-09-04","2025-09-05","2025-09-08","2025-09-09","2025-09-10","2025-09-11","2025-09-12","2025-09-15","2025-09-16","2025-09-17","2025-09-18","2025-09-19","2025-09-22","2025-09-23","2025-09-24","2025-09-25","2025-09-26","2025-09-29","2025-09-30","2025-10-01","2025-10-02","2025-10-03","2025-10-06","2025-10-07","2025-10-08","2025-10-09","2025-10-10","2025-10-13","2025-10-14","2025-10-15","2025-10-16","2025-10-17","2025-10-20","2025-10-21","2025-10-22","2025-10-23","2025-10-24","2025-10-27","2025-10-28","2025-10-29","2025-10-30","2025-10-31","2025-11-03","2025-11-04","2025-11-05","2025-11-06","2025-11-07","2025-11-10","2025-11-11","2025-11-12","2025-11-13","2025-11-14","2025-11-17","2025-11-18","2025-11-19","2025-11-20","2025-11-21","2025-11-24","2025-11-25","2025-11-26","2025-11-28","2025-12-01","2025-12-02","2025-12-03","2025-12-04","2025-12-05","2025-12-08","2025-12-09","2025-12-10","2025-12-11","2025-12-12","2025-12-15","2025-12-16","2025-12-17","2025-12-18","2025-12-19","2025-12-22","2025-12-23","2025-12-24","2025-12-26","2025-12-29","2025-12-30","2025-12-31","2026-01-02","2026-01-05","2026-01-06","2026-01-07","2026-01-08","2026-01-09","2026-01-12","2026-01-13","2026-01-14","2026-01-15","2026-01-16","2026-01-20","2026-01-21","2026-01-22","2026-01-23","2026-01-26","2026-01-27","2026-01-28","2026-01-29","2026-01-30","2026-02-02","2026-02-03","2026-02-04","2026-02-05","2026-02-06","2026-02-09","2026-02-10","2026-02-11","2026-02-12","2026-02-13","2026-02-17","2026-02-18","2026-02-19","2026-02-20","2026-02-23","2026-02-24","2026-02-25","2026-02-26","2026-02-27","2026-03-02","2026-03-03","2026-03-04","2026-03-05","2026-03-06","2026-03-09","2026-03-10","2026-03-11","2026-03-12","2026-03-13","2026-03-16","2026-03-17","2026-03-18","2026-03-19","2026-03-20","2026-03-23","2026-03-24","2026-03-25","2026-03-26","2026-03-27","2026-03-30","2026-03-31","2026-04-01","2026-04-02","2026-04-06","2026-04-07","2026-04-08","2026-04-09","2026-04-10","2026-04-13","2026-04-14","2026-04-15","2026-04-16","2026-04-17","2026-04-20","2026-04-21","2026-04-22","2026-04-23","2026-04-24","2026-04-27","2026-04-28","2026-04-29","2026-04-30","2026-05-01","2026-05-04","2026-05-05","2026-05-06","2026-05-07","2026-05-08","2026-05-11","2026-05-12","2026-05-13","2026-05-14","2026-05-15","2026-05-18","2026-05-19","2026-05-20","2026-05-21","2026-05-22","2026-05-26","2026-05-27","2026-05-28","2026-05-29","2026-06-01","2026-06-02","2026-06-03","2026-06-04","2026-06-05","2026-06-08","2026-06-09","2026-06-10","2026-06-11","2026-06-12","2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-22","2026-06-23","2026-06-24","2026-06-25","2026-06-26","2026-06-29","2026-06-30","2026-07-01","2026-07-02","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24","2026-07-27","2026-07-28","2026-07-29","2026-07-30","2026-07-31","2026-08-03","2026-08-04","2026-08-05","2026-08-06","2026-08-07","2026-08-10","2026-08-11","2026-08-12","2026-08-13","2026-08-14","2026-08-17","2026-08-18","2026-08-19","2026-08-20","2026-08-21","2026-08-24","2026-08-25","2026-08-26","2026-08-27","2026-08-28","2026-08-31","2026-09-01","2026-09-02","2026-09-03","2026-09-04","2026-09-08","2026-09-09","2026-09-10","2026-09-11","2026-09-14","2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22","2026-09-23","2026-09-24","2026-09-25","2026-09-28","2026-09-29","2026-09-30","2026-10-01","2026-10-02","2026-10-05","2026-10-06","2026-10-07","2026-10-08","2026-10-09","2026-10-12","2026-10-13","2026-10-14","2026-10-15","2026-10-16","2026-10-19","2026-10-20","2026-10-21","2026-10-22","2026-10-23","2026-10-26","2026-10-27","2026-10-28","2026-10-29","2026-10-30","2026-11-02","2026-11-03","2026-11-04","2026-11-05","2026-11-06","2026-11-09","2026-11-10","2026-11-11","2026-11-12","2026-11-13","2026-11-16","2026-11-17","2026-11-18","2026-11-19","2026-11-20","2026-11-23","2026-11-24","2026-11-25","2026-11-27"],"stats":[{"ticker":"ALLW","name":"ALLW","total":0.1694,"annual":0.0948,"vol":0.1221,"worst":-0.1083,"ytd":0.0162,"year":0.0111,"corr":null},{"ticker":"RPAR","name":"RPAR risk parity","total":0.1187,"annual":0.0671,"vol":0.113,"worst":-0.1218,"ytd":-0.0098,"year":-0.0133,"corr":0.9},{"ticker":"AOR","name":"AOR 60/40","total":0.2011,"annual":0.1119,"vol":0.1064,"worst":-0.0841,"ytd":0.045,"year":0.053,"corr":0.79},{"ticker":"SPY","name":"S&P 500 (SPY)","total":0.2967,"annual":0.1623,"vol":0.1796,"worst":-0.1372,"ytd":0.0764,"year":0.0831,"corr":0.68}],"lines":{"ALLW":[0.0,-0.0015,-0.0119,-0.0103,-0.0129,-0.0125,-0.0039,0.0045,0.0031,0.0109,0.0077,0.0037,0.0033,0.0049,-0.0015,0.0013,0.0017,0.0065,0.0117,0.0165,0.0093,-0.0375,-0.0591,-0.0727,-0.0271,-0.0583,-0.0371,-0.0343,-0.0323,-0.0255,-0.0215,-0.0255,-0.0187,-0.0171,-0.0007,0.0009,0.0073,0.0093,0.0089,0.0003,0.0033,0.0045,0.0095,0.0097,0.0025,0.0057,0.0037,0.0069,-0.0003,0.0065,0.0069,0.0101,0.0093,0.0009,0.0017,0.0061,0.0137,0.0057,0.0121,0.0117,0.0169,0.0149,0.0267,0.0219,0.0177,0.0203,0.0241,0.0273,0.0349,0.0309,0.0319,0.0333,0.0357,0.0345,0.0367,0.0357,0.0325,0.0405,0.0357,0.0429,0.0427,0.0411,0.0431,0.0345,0.0337,0.0421,0.0409,0.0375,0.0381,0.0321,0.0371,0.0389,0.0427,0.0501,0.0553,0.0531,0.0492,0.0501,0.0423,0.0511,0.0447,0.0399,0.0441,0.0519,0.0515,0.0523,0.056,0.0551,0.0535,0.0539,0.0611,0.0571,0.0531,0.0521,0.0499,0.0501,0.0511,0.0677,0.0607,0.0641,0.0647,0.0709,0.0695,0.0663,0.0739,0.0784,0.0864,0.0973,0.0941,0.0989,0.1059,0.1025,0.1105,0.1117,0.1061,0.1025,0.1017,0.1029,0.1055,0.1027,0.1029,0.1048,0.1137,0.1153,0.1217,0.1225,0.1265,0.1265,0.1297,0.1369,0.1265,0.1209,0.1353,0.1397,0.1441,0.1553,0.1477,0.1657,0.1529,0.1509,0.1585,0.1589,0.1553,0.1569,0.1481,0.1481,0.1457,0.1481,0.1397,0.1389,0.1405,0.1421,0.1517,0.1625,0.1649,0.1533,0.1421,0.1369,0.1361,0.1317,0.1261,0.1321,0.1401,0.1457,0.1565,0.1605,0.1545,0.1525,0.1581,0.1545,0.1541,0.1477,0.1429,0.1517,0.1545,0.1461,0.1469,0.1433,0.1393,0.1469,0.1465,0.1537,0.1605,0.1673,0.1681,0.1583,0.1613,0.1508,0.1567,0.1705,0.1759,0.174,0.1734,0.1809,0.1914,0.1876,0.1939,0.1914,0.1899,0.1826,0.1985,0.2006,0.2082,0.2165,0.2249,0.2236,0.2354,0.2061,0.1902,0.2023,0.2031,0.1964,0.2115,0.2208,0.2224,0.227,0.2236,0.227,0.2211,0.2308,0.2341,0.2421,0.2467,0.2458,0.2525,0.254,0.2617,0.255,0.237,0.2396,0.2295,0.237,0.2437,0.2412,0.2396,0.2316,0.222,0.2287,0.2366,0.2203,0.2115,0.1738,0.1793,0.1763,0.1931,0.1705,0.1709,0.1843,0.2077,0.2128,0.2182,0.2195,0.2186,0.2316,0.2358,0.2316,0.2379,0.2513,0.2463,0.2458,0.2559,0.2517,0.2383,0.2492,0.245,0.2504,0.2467,0.2437,0.2366,0.2534,0.2509,0.2454,0.2521,0.2668,0.2561,0.2655,0.2659,0.2636,0.2661,0.2638,0.2379,0.2446,0.2349,0.2483,0.2479,0.2496,0.2592,0.2534,0.2601,0.2613,0.2617,0.2663,0.2567,0.2571,0.2266,0.2278,0.2262,0.2119,0.2329,0.2342,0.2442,0.2446,0.2329,0.2396,0.2321,0.2195,0.2195,0.2249,0.2232,0.2272,0.2253,0.2199,0.2241,0.2358,0.2233,0.2188,0.2241,0.2262,0.2153,0.2262,0.2316,0.221,0.224,0.219,0.227,0.232,0.2202,0.2211,0.2203,0.2221,0.2161,0.2264,0.222,0.2236,0.2291,0.2408,0.2375,0.2479,0.2509,0.2521,0.2543,0.2546,0.2525,0.2513,0.2463,0.2622,0.2613,0.2651,0.2661,0.2741,0.2697,0.2718,0.2626,0.2609,0.2513,0.2571,0.2643,0.263,0.2559,0.25,0.2383,0.2387,0.2324,0.2324,0.2278,0.2421,0.2312,0.2448,0.2471,0.2249,0.2199,0.2205,0.1998,0.1998,0.196,0.1975,0.1964,0.1964,0.2056,0.1985,0.2015,0.2083,0.209,0.2128,0.2073,0.2216,0.2178,0.2094,0.2153,0.2144,0.2186,0.2174,0.219,0.223,0.2223,0.2226,0.2165,0.2136,0.204,0.2224,0.2115,0.2077,0.2211,0.2036,0.2061,0.1906,0.1847,0.1696,0.1655,0.1558,0.147,0.1362,0.1562,0.1508,0.1588,0.1694],"RPAR":[0.0,0.0013,0.0005,-0.0046,-0.0071,-0.0044,0.0077,0.009,0.0097,0.0169,0.0159,0.0092,0.0067,0.0106,0.0044,0.0037,0.0062,0.014,0.0171,0.0171,0.0089,-0.0179,-0.0447,-0.0627,-0.0303,-0.0554,-0.0426,-0.0324,-0.0313,-0.0292,-0.0283,-0.037,-0.0256,-0.0205,-0.005,-0.0045,0.0017,0.0058,0.0027,-0.0045,-0.003,-0.0025,0.0023,-0.0004,-0.006,-0.003,-0.0055,0.0019,-0.0034,0.005,0.0063,0.0067,0.0034,-0.0092,-0.0107,-0.0045,0.005,-0.0028,0.0042,0.0047,0.0045,0.0022,0.0171,0.0166,0.0073,0.0102,0.0161,0.0187,0.0261,0.0187,0.0166,0.0222,0.021,0.0192,0.0217,0.0259,0.0269,0.0352,0.0315,0.0398,0.0434,0.0471,0.0455,0.0326,0.032,0.0356,0.0411,0.0336,0.0315,0.0242,0.0296,0.0321,0.0315,0.0403,0.0482,0.046,0.045,0.0452,0.0387,0.0482,0.0367,0.0355,0.0398,0.0476,0.0498,0.0472,0.0486,0.0505,0.0481,0.0489,0.0567,0.0491,0.046,0.0449,0.045,0.0455,0.0424,0.0594,0.0567,0.0565,0.0578,0.0635,0.0601,0.0552,0.0627,0.0683,0.082,0.089,0.0851,0.0901,0.0991,0.097,0.101,0.1034,0.1008,0.0924,0.0953,0.0957,0.0995,0.0961,0.0965,0.0963,0.1044,0.1059,0.1081,0.1102,0.1114,0.1107,0.1165,0.1212,0.1155,0.1127,0.1217,0.1258,0.1299,0.1369,0.1326,0.1453,0.1375,0.1383,0.1387,0.1404,0.1422,0.1437,0.1372,0.131,0.1298,0.1238,0.1184,0.1171,0.1211,0.1218,0.131,0.1359,0.1411,0.1306,0.1249,0.1181,0.1154,0.1142,0.1088,0.112,0.1213,0.1275,0.1338,0.1327,0.1254,0.1259,0.1343,0.1343,0.1283,0.1231,0.1254,0.1341,0.1363,0.1275,0.1259,0.1236,0.1232,0.1294,0.1284,0.1322,0.1369,0.1441,0.145,0.143,0.1398,0.1298,0.1392,0.1491,0.1551,0.1535,0.1505,0.158,0.1625,0.1646,0.1719,0.1734,0.1681,0.1582,0.1747,0.1789,0.1862,0.1965,0.2022,0.2083,0.2104,0.1833,0.1764,0.1928,0.1897,0.1851,0.1975,0.2085,0.2105,0.2214,0.2188,0.2193,0.2141,0.2202,0.2217,0.2391,0.2304,0.2325,0.2378,0.2388,0.2478,0.2407,0.2192,0.22,0.2067,0.2009,0.2111,0.2046,0.2004,0.1893,0.1814,0.1898,0.1962,0.1827,0.1763,0.1466,0.1556,0.1509,0.1677,0.153,0.147,0.1553,0.1733,0.1801,0.1754,0.1772,0.1764,0.1943,0.1922,0.1991,0.2017,0.2096,0.2102,0.2028,0.2128,0.2128,0.2028,0.2112,0.2052,0.207,0.2034,0.1975,0.1897,0.2009,0.1996,0.1937,0.201,0.2159,0.2038,0.2155,0.2151,0.2102,0.2101,0.2113,0.1902,0.1912,0.1759,0.1912,0.1922,0.1943,0.2049,0.2054,0.2081,0.2081,0.2107,0.2207,0.2149,0.2165,0.1907,0.1843,0.1858,0.173,0.1928,0.1988,0.2091,0.2059,0.1986,0.2036,0.1949,0.184,0.1838,0.1884,0.1872,0.196,0.1886,0.1809,0.1832,0.188,0.1725,0.1698,0.1739,0.1765,0.166,0.1736,0.1743,0.1657,0.1681,0.1628,0.1703,0.1714,0.1619,0.1647,0.1658,0.1667,0.1564,0.1661,0.1597,0.1629,0.1779,0.1835,0.179,0.188,0.187,0.1848,0.1907,0.1891,0.187,0.1864,0.1831,0.202,0.2024,0.2024,0.2076,0.2179,0.2131,0.2129,0.202,0.1998,0.1955,0.2,0.2067,0.2045,0.2034,0.1966,0.179,0.1813,0.1752,0.1735,0.166,0.1796,0.1737,0.1827,0.1832,0.1643,0.1539,0.1539,0.1462,0.1392,0.1341,0.134,0.1344,0.1361,0.1408,0.1332,0.1397,0.1437,0.1414,0.1496,0.1479,0.159,0.158,0.1515,0.1582,0.1586,0.1622,0.1584,0.1613,0.1666,0.1618,0.1655,0.1571,0.1604,0.1489,0.1645,0.1548,0.1527,0.164,0.1457,0.15,0.1334,0.1278,0.1177,0.1151,0.1097,0.1021,0.0958,0.1125,0.1058,0.1156,0.1187],"AOR":[0.0,0.0076,-0.0065,-0.0131,-0.0098,-0.0169,-0.0053,-0.0007,-0.0021,0.0031,0.0003,-0.0005,0.0041,0.0057,0.0021,-0.0019,-0.0105,-0.0086,-0.0057,-0.0011,-0.0265,-0.0587,-0.0709,-0.0772,-0.0331,-0.0486,-0.037,-0.0324,-0.0284,-0.0391,-0.0367,-0.0469,-0.0329,-0.0251,-0.0133,-0.0094,-0.0082,-0.0028,-0.0035,-0.0023,0.0069,0.0036,0.0026,0.0026,0.0043,0.005,0.0178,0.0219,0.02,0.0256,0.0289,0.0308,0.0299,0.0197,0.0211,0.018,0.0306,0.0261,0.0299,0.0302,0.033,0.0354,0.0387,0.0356,0.0389,0.0411,0.0439,0.0453,0.0487,0.0384,0.043,0.0378,0.0391,0.0375,0.0429,0.0524,0.051,0.0577,0.0607,0.0648,0.0643,0.0693,0.0707,0.0629,0.0648,0.0718,0.0702,0.0651,0.0664,0.063,0.0657,0.0693,0.0686,0.0714,0.0744,0.0805,0.0793,0.0815,0.077,0.0773,0.0739,0.0711,0.066,0.0759,0.0744,0.0772,0.0793,0.0833,0.0817,0.0888,0.0944,0.0918,0.0908,0.0915,0.0892,0.0885,0.085,0.0977,0.093,0.0953,0.0951,0.0981,0.0948,0.0883,0.092,0.0989,0.1017,0.1061,0.1059,0.108,0.1155,0.1131,0.1186,0.1179,0.1167,0.1188,0.1197,0.1221,0.1206,0.1157,0.112,0.1152,0.1193,0.122,0.1261,0.1278,0.1294,0.1305,0.1268,0.1315,0.1275,0.11,0.1215,0.1214,0.1261,0.125,0.127,0.135,0.1326,0.1303,0.134,0.139,0.148,0.1467,0.1443,0.1382,0.139,0.1394,0.1312,0.1338,0.1296,0.1305,0.1401,0.1429,0.1446,0.1333,0.1324,0.125,0.1198,0.1203,0.1112,0.1194,0.1271,0.1347,0.1406,0.1453,0.1387,0.1404,0.1441,0.1441,0.1448,0.1413,0.1413,0.1483,0.1506,0.1431,0.1436,0.1415,0.135,0.1413,0.1464,0.1499,0.153,0.1564,0.1569,0.1553,0.1548,0.1493,0.1543,0.1608,0.1638,0.1624,0.1617,0.167,0.1705,0.1686,0.1684,0.1696,0.1689,0.1546,0.1647,0.1686,0.1702,0.1741,0.1801,0.1783,0.1788,0.1732,0.1757,0.1739,0.1716,0.1642,0.1797,0.1852,0.1859,0.1868,0.1792,0.1818,0.1824,0.1852,0.1838,0.1901,0.1845,0.1896,0.1953,0.1928,0.1909,0.1848,0.1698,0.176,0.1659,0.1574,0.1643,0.1638,0.1604,0.1467,0.1415,0.1527,0.156,0.1435,0.1426,0.1239,0.1376,0.1325,0.141,0.1251,0.1159,0.1159,0.1376,0.1445,0.1438,0.1465,0.1475,0.171,0.1733,0.1726,0.1802,0.1895,0.1918,0.1921,0.2035,0.2012,0.1914,0.1982,0.1932,0.2001,0.1994,0.195,0.1907,0.2024,0.2039,0.1983,0.2067,0.2225,0.2149,0.2229,0.223,0.217,0.2218,0.2252,0.2102,0.2113,0.2049,0.2166,0.22,0.222,0.2323,0.2312,0.2349,0.2365,0.2381,0.2408,0.2342,0.2372,0.2129,0.2163,0.2163,0.2051,0.2246,0.2278,0.2396,0.2372,0.2285,0.2392,0.2364,0.2218,0.2232,0.2261,0.2234,0.2312,0.2346,0.2298,0.2398,0.24,0.2305,0.2269,0.2337,0.2367,0.2262,0.2323,0.236,0.2306,0.2244,0.2204,0.2281,0.2278,0.2178,0.2181,0.2204,0.2212,0.2099,0.2258,0.2265,0.236,0.2509,0.2505,0.2478,0.255,0.2514,0.251,0.2548,0.26,0.258,0.2552,0.2469,0.251,0.2462,0.2502,0.248,0.2544,0.2527,0.2557,0.2516,0.2482,0.241,0.246,0.2546,0.2544,0.2502,0.2435,0.2349,0.2414,0.2344,0.231,0.2283,0.238,0.2364,0.2485,0.2498,0.2376,0.2337,0.2394,0.2317,0.2301,0.2263,0.2265,0.2329,0.2372,0.2408,0.2354,0.2325,0.2377,0.2361,0.2367,0.2293,0.2343,0.2277,0.2273,0.2314,0.2356,0.2291,0.2252,0.2289,0.2343,0.2367,0.2367,0.2253,0.2246,0.2237,0.2383,0.2093,0.2108,0.2293,0.223,0.2304,0.2235,0.2214,0.2074,0.1998,0.1973,0.1842,0.1628,0.1922,0.1887,0.1901,0.2011],"SPY":[0.0,0.0056,-0.0212,-0.0293,-0.0242,-0.0372,-0.0173,-0.0097,-0.0204,-0.0097,-0.0126,-0.0123,0.0054,0.0078,-0.0042,-0.0069,-0.0269,-0.0203,-0.0176,-0.0113,-0.0601,-0.1151,-0.1167,-0.1305,-0.0392,-0.0813,-0.0649,-0.0558,-0.0585,-0.0794,-0.0781,-0.1,-0.0766,-0.0623,-0.0426,-0.0356,-0.0353,-0.0292,-0.0288,-0.0219,-0.0074,-0.0131,-0.0214,-0.0172,-0.0104,-0.0117,0.021,0.0278,0.0291,0.0341,0.0406,0.0418,0.0383,0.0208,0.0212,0.0142,0.0353,0.0293,0.0334,0.0322,0.038,0.044,0.0437,0.0386,0.0493,0.0502,0.0562,0.0532,0.0574,0.0455,0.0555,0.0465,0.0463,0.0439,0.0542,0.0658,0.0664,0.0748,0.0801,0.0853,0.0849,0.0898,0.0984,0.0902,0.0896,0.0962,0.0993,0.0954,0.0975,0.0928,0.0965,0.1032,0.1024,0.1045,0.1046,0.114,0.1144,0.1191,0.1188,0.1158,0.1144,0.1103,0.0921,0.1087,0.103,0.1115,0.1106,0.1192,0.117,0.1289,0.1328,0.1329,0.1302,0.13,0.1238,0.1209,0.1164,0.1335,0.1285,0.1332,0.1358,0.1398,0.133,0.1247,0.1307,0.1402,0.1369,0.1397,0.1423,0.1456,0.1551,0.1548,0.1609,0.1593,0.1579,0.1633,0.169,0.1746,0.1682,0.1644,0.1591,0.1657,0.169,0.1734,0.1774,0.1787,0.1787,0.183,0.1786,0.1856,0.1822,0.1502,0.1679,0.1664,0.1716,0.1636,0.1702,0.1824,0.1824,0.1762,0.1832,0.1929,0.207,0.2102,0.2107,0.1974,0.2014,0.2036,0.1893,0.1935,0.1807,0.1818,0.2003,0.203,0.2037,0.1837,0.1835,0.1725,0.1626,0.1671,0.1493,0.1608,0.1779,0.189,0.1972,0.2037,0.1982,0.2004,0.2046,0.2055,0.2078,0.2041,0.2031,0.2111,0.2139,0.2008,0.199,0.1957,0.1826,0.1915,0.2023,0.2098,0.2153,0.2196,0.2195,0.2151,0.2136,0.2046,0.2068,0.2149,0.2221,0.2182,0.218,0.2261,0.228,0.2256,0.2195,0.2229,0.2218,0.197,0.2108,0.2171,0.2175,0.2237,0.2286,0.2285,0.226,0.2224,0.2285,0.2181,0.2122,0.197,0.22,0.2259,0.2226,0.2224,0.2035,0.2043,0.2063,0.2124,0.2092,0.2179,0.2055,0.2142,0.2245,0.2177,0.2118,0.2125,0.2018,0.2103,0.2036,0.1878,0.1982,0.1963,0.1948,0.1766,0.17,0.1819,0.185,0.1684,0.1656,0.1489,0.161,0.1571,0.1635,0.1427,0.1232,0.1195,0.152,0.1607,0.1618,0.1672,0.1678,0.1975,0.2044,0.2036,0.2154,0.2302,0.2399,0.2429,0.258,0.2554,0.2472,0.2599,0.255,0.2647,0.2669,0.2607,0.2605,0.2731,0.2766,0.2719,0.2821,0.2999,0.2959,0.3066,0.3096,0.3076,0.3149,0.3253,0.3094,0.3085,0.2997,0.3131,0.3157,0.3208,0.3296,0.3294,0.3367,0.34,0.3437,0.3455,0.3361,0.3411,0.3065,0.3095,0.3056,0.285,0.3069,0.314,0.3371,0.3292,0.3126,0.3262,0.322,0.3028,0.3022,0.3041,0.2946,0.316,0.3262,0.3244,0.3227,0.3342,0.3279,0.3238,0.335,0.3407,0.3305,0.3352,0.3405,0.3332,0.32,0.3179,0.3289,0.3274,0.311,0.3123,0.3126,0.3157,0.2955,0.3172,0.3267,0.3456,0.3698,0.3671,0.3649,0.3733,0.3729,0.3685,0.3719,0.3815,0.3787,0.3722,0.3629,0.3658,0.3543,0.3599,0.3559,0.3602,0.3605,0.3694,0.3663,0.3622,0.3529,0.3589,0.3731,0.3678,0.3603,0.354,0.3459,0.3573,0.3513,0.3451,0.3391,0.3543,0.3561,0.3771,0.3769,0.367,0.3658,0.3733,0.363,0.3605,0.3577,0.3602,0.3702,0.3795,0.387,0.3837,0.3779,0.3861,0.3853,0.3851,0.3702,0.3741,0.3588,0.3646,0.3692,0.3764,0.3601,0.353,0.3626,0.3703,0.375,0.3697,0.3454,0.339,0.343,0.3652,0.305,0.3091,0.34,0.3351,0.3527,0.3479,0.343,0.3174,0.304,0.3,0.2745,0.2281,0.2859,0.2797,0.276,0.2967]}},"fund":{"source":"https://www.ssga.com/us/en/intermediary/etfs/state-street-bridgewater-all-weather-etf-allw","premium_source":"https://www.ssga.com/library-content/products/fund-data/etfs/us/pdhist-us-en-allw.xlsx","tables":[{"when":"month end","as_of":"2026-10-31","nav":{"1 month":0.01554795,"QTD":0.01554795,"YTD":0.055241439999999996,"1 year":0.06227554,"3 years":null,"5 years":null,"10 years":null,"Since inception":0.12466032},"index":{"1 month":-0.01558256,"QTD":-0.01558256,"YTD":0.1121283,"1 year":0.1249667,"3 years":0.22009325000000002,"5 years":0.09658756,"10 years":0.12095287,"Since inception":0.18918472}},{"when":"quarter end","as_of":"2026-09-30","nav":{"1 month":-0.04921272,"QTD":-0.02210909,"YTD":0.03908578,"1 year":0.07633386,"3 years":null,"5 years":null,"10 years":null,"Since inception":0.12076911000000001},"index":{"1 month":-0.014065000000000001,"QTD":0.01079072,"YTD":0.12973242000000001,"1 year":0.16614726000000002,"3 years":0.2127247,"5 years":0.11053747,"10 years":0.12052218999999999,"Since inception":0.21241281}}],"index_name":"MSCI ACWI IMI","inception":"2025-03-05","expense_ratio":0.0085,"nav_date":"2026-11-25","allocation":{"as_of":"2026-11-25","rows":[{"name":"Global Nominal Bonds","weight":0.7178055113},{"name":"Global Equities","weight":0.4332702408},{"name":"Inflation Linked Bonds","weight":0.4255283258},{"name":"Commodities","weight":0.32560010970000003}]},"daily":{"as_of":"2026-11-25","nav":27.659166,"nav_chg":0.0025115738123033804,"price":27.684999937635656,"premium":0.00093401,"price_chg":0.006910341894515115},"premium":{"dates":["2025-11-13","2025-11-14","2025-11-17","2025-11-18","2025-11-19","2025-11-20","2025-11-21","2025-11-24","2025-11-25","2025-11-26","2025-11-28","2025-12-01","2025-12-02","2025-12-03","2025-12-04","2025-12-05","2025-12-08","2025-12-09","2025-12-10","2025-12-11","2025-12-12","2025-12-15","2025-12-16","2025-12-17","2025-12-18","2025-12-19","2025-12-22","2025-12-23","2025-12-24","2025-12-26","2025-12-29","2025-12-30","2025-12-31","2026-01-02","2026-01-05","2026-01-06","2026-01-07","2026-01-08","2026-01-09","2026-01-12","2026-01-13","2026-01-14","2026-01-15","2026-01-16","2026-01-20","2026-01-21","2026-01-22","2026-01-23","2026-01-26","2026-01-27","2026-01-28","2026-01-29","2026-01-30","2026-02-02","2026-02-03","2026-02-04","2026-02-05","2026-02-06","2026-02-09","2026-02-10","2026-02-11","2026-02-12","2026-02-13","2026-02-17","2026-02-18","2026-02-19","2026-02-20","2026-02-23","2026-02-24","2026-02-25","2026-02-26","2026-02-27","2026-03-02","2026-03-03","2026-03-04","2026-03-05","2026-03-06","2026-03-09","2026-03-10","2026-03-11","2026-03-12","2026-03-13","2026-03-16","2026-03-17","2026-03-18","2026-03-19","2026-03-20","2026-03-23","2026-03-24","2026-03-25","2026-03-26","2026-03-27","2026-03-30","2026-03-31","2026-04-01","2026-04-02","2026-04-06","2026-04-07","2026-04-08","2026-04-09","2026-04-10","2026-04-13","2026-04-14","2026-04-15","2026-04-16","2026-04-17","2026-04-20","2026-04-21","2026-04-22","2026-04-23","2026-04-24","2026-04-27","2026-04-28","2026-04-29","2026-04-30","2026-05-01","2026-05-04","2026-05-05","2026-05-06","2026-05-07","2026-05-08","2026-05-11","2026-05-12","2026-05-13","2026-05-14","2026-05-15","2026-05-18","2026-05-19","2026-05-20","2026-05-21","2026-05-22","2026-05-26","2026-05-27","2026-05-28","2026-05-29","2026-06-01","2026-06-02","2026-06-03","2026-06-04","2026-06-05","2026-06-08","2026-06-09","2026-06-10","2026-06-11","2026-06-12","2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-22","2026-06-23","2026-06-24","2026-06-25","2026-06-26","2026-06-29","2026-06-30","2026-07-01","2026-07-02","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24","2026-07-27","2026-07-28","2026-07-29","2026-07-30","2026-07-31","2026-08-03","2026-08-04","2026-08-05","2026-08-06","2026-08-07","2026-08-10","2026-08-11","2026-08-12","2026-08-13","2026-08-14","2026-08-17","2026-08-18","2026-08-19","2026-08-20","2026-08-21","2026-08-24","2026-08-25","2026-08-26","2026-08-27","2026-08-28","2026-08-31","2026-09-01","2026-09-02","2026-09-03","2026-09-04","2026-09-08","2026-09-09","2026-09-10","2026-09-11","2026-09-14","2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22","2026-09-23","2026-09-24","2026-09-25","2026-09-28","2026-09-29","2026-09-30","2026-10-01","2026-10-02","2026-10-05","2026-10-06","2026-10-07","2026-10-08","2026-10-09","2026-10-12","2026-10-13","2026-10-14","2026-10-15","2026-10-16","2026-10-19","2026-10-20","2026-10-21","2026-10-22","2026-10-23","2026-10-26","2026-10-27","2026-10-28","2026-10-29","2026-10-30","2026-11-02","2026-11-03","2026-11-04","2026-11-05","2026-11-06","2026-11-09","2026-11-10","2026-11-11","2026-11-12","2026-11-13","2026-11-16","2026-11-17","2026-11-18","2026-11-19","2026-11-20","2026-11-23","2026-11-24","2026-11-25"],"values":[-0.002353,-3e-05,-0.001341,0.002218,0.000362,-0.000877,0.002328,0.002321,0.002054,0.002115,0.0011,0.000397,0.002641,0.003311,0.000443,0.000265,0.003046,0.002394,0.006205,0.003211,0.002516,0.003578,0.003437,-0.000431,0.000436,9e-06,0.002962,0.001785,0.004666,0.001699,0.001854,-0.000791,-0.000531,0.004425,0.00362,0.00226,0.001702,0.004559,0.003687,0.003803,-0.001865,0.000328,-0.000508,0.004003,0.000477,0.004477,0.001766,0.001863,-0.000746,0.005595,0.002638,0.004999,0.00591,0.005001,0.002992,0.002061,-0.000561,0.003184,0.00213,0.001885,0.001708,0.002344,0.002002,0.002307,0.001555,0.003382,0.003897,0.003675,0.002046,0.001485,0.002622,0.0012,0.00026,0.001824,0.004042,0.000459,0.000232,0.004748,0.000641,0.003348,0.002076,-0.000331,0.003792,0.002897,-0.003557,0.004413,-0.009405,0.004512,0.000185,-0.000722,-0.004073,-0.002789,-0.001298,0.006808,-0.000376,0.00212,0.002905,0.003521,0.001471,0.004323,0.002589,0.003315,0.004845,0.001103,0.001254,0.003685,0.001923,-0.002035,0.001577,0.000245,0.002358,0.00063,0.001225,-0.000617,0.003819,-0.000203,-2.1e-05,0.003261,0.004862,-0.000823,0.002332,0.001648,0.004476,0.003104,0.001427,-0.000561,0.003306,-0.000646,0.004926,0.003597,0.001529,0.002886,0.001734,0.001157,0.000507,0.002466,0.001989,0.001158,0.002502,-0.001194,0.002343,0.002414,-0.001553,0.010095,0.000946,0.00049,0.001642,-0.00575,-0.000246,0.001086,0.000971,0.002327,0.000713,0.000962,0.00241,0.000839,0.001258,0.002233,0.001848,-0.00062,0.004139,0.00207,0.001392,-0.00088,0.002245,0.003362,0.001021,-1.7e-05,0.00119,0.000769,8.7e-05,0.000126,0.001397,0.000514,0.002523,-0.002306,0.006089,0.001522,0.000728,-0.001188,0.000844,0.000388,0.000918,0.000918,0.0012,0.001112,0.00046,0.000981,-0.000278,0.000147,0.002309,0.000567,0.001972,0.002468,0.00348,0.00033,0.002788,-0.000758,0.001715,-0.00205,0.003797,-0.000197,0.002559,-0.00064,0.000284,-0.002734,0.002667,-0.000498,0.000686,-0.001994,-0.000317,-0.001492,0.000555,0.00288,-0.000909,0.00308,0.003828,0.000595,0.001414,-0.00068,-0.000417,0.000531,-0.000152,7.1e-05,0.001103,0.001808,-0.000143,-0.000485,0.000334,-0.001645,0.00186,-0.002754,-0.002241,0.000416,-0.00053,-0.003031,0.000471,-0.001371,0.00115,0.004001,0.000963,-0.000645,0.000346,-0.000345,0.005813,-0.002377,0.000457,0.004295,0.001601,0.001267,-0.00185,0.001663,-0.002601,-0.002228,-0.002425,-0.003645,-0.004094,-0.001556,-0.003439,0.000934]}}};
+  if (!D) { document.querySelector(".wrap").insertAdjacentHTML("beforeend", '<p class="empty">No ALLW files archived yet.</p>'); return; }
+  const $ = (id) => document.getElementById(id);
+  const SLV = ["equity", "nominal", "inflation", "commodity"];
+  const COL = { equity: "var(--equity)", nominal: "var(--nominal)", inflation: "var(--inflation)", commodity: "var(--commodity)", cash: "var(--cash)", other: "var(--muted)", gross: "var(--ink)" };
+  const NM = Object.assign({ gross: "Gross exposure", other: "Other" }, D.names);
+  const LOOK = { day: "Day", week: "Week", month: "Month", quarter: "Quarter", year: "Year" };
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const pct = (x, dp = 1) => x == null ? "–" : (x * 100).toFixed(dp) + "%";
+  const pp = (x, dp = 1) => x == null ? "–" : (x >= 0 ? "+" : "−") + Math.abs(x * 100).toFixed(dp) + "pp";
+  const money = (x) => x == null ? "–" : Math.abs(x) >= 1e9 ? "$" + (x / 1e9).toFixed(2) + "bn" : "$" + (x / 1e6).toFixed(1) + "M";
+  const usd = (x) => x == null ? "–" : (x < 0 ? "−" : "") + "$" + Math.abs(x).toLocaleString("en-US", { maximumFractionDigits: 0 });
+  const fdate = (s) => { const d = new Date(s + "T12:00:00Z"); return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); };
+  const looks = Object.keys(LOOK).filter((k) => D.lookbacks[k]);
+  let cmp = looks.includes("week") ? "week" : looks[0] || null;
+
+  // header and stats
+  const C = D.counts || { daily: D.days, nport: 0 };
+  $("asof").innerHTML = `Holdings as of <b>${fdate(D.as_of)}</b><br>${C.daily} holdings file${C.daily === 1 ? "" : "s"}` +
+    (C.nport ? `, ${C.nport} quarter-end SEC filing${C.nport === 1 ? "" : "s"}` : "") +
+    (C.exposure ? `, ${C.exposure} month-end exposure sheet${C.exposure === 1 ? "" : "s"}` : "") + ` since ${fdate(D.first)}<br>` +
+    `<a href="${esc(D.source)}">holdings</a> · <a href="${esc(D.nav_source)}">NAV history</a>` +
+    (C.nport && D.nport_source ? ` · <a href="${esc(D.nport_source)}">N-PORT</a>` : "") +
+    (C.exposure && D.exposure_source ? ` · <a href="${esc(D.exposure_source)}">exposure sheet</a>` : "");
+  const g = D.gross, gThen = cmp ? D.gross_then[cmp] : null;
+  const stat = (label, value, delta) => `<div class="stat"><div class="label">${label}</div><div class="value">${value}</div><div class="delta">${delta || "&nbsp;"}</div></div>`;
+  const vs = cmp ? ` vs ${LOOK[cmp].toLowerCase()} ago` : "";
+  $("stats").innerHTML = [
+    stat("Gross exposure", pct(g), gThen != null ? pp(g - gThen) + vs : "of net assets"),
+    stat("Leverage", (g).toFixed(2) + "x", "gross over net assets"),
+    stat("Cash and collateral", pct(D.sleeves.cash), "money fund, T-bills, cash"),
+    stat("Net assets", money(D.tna), D.tna_estimated ? "estimated from the holdings" : (D.shares ? (D.shares / 1e6).toFixed(1) + "M shares" : "")),
+    stat("NAV per share", D.nav != null ? "$" + D.nav.toFixed(2) : "–", "State Street NAV history"),
+  ].join("");
+  const big = SLV.slice().sort((a, b) => D.sleeves[b] - D.sleeves[a]);
+  $("summary").innerHTML = `<span>The book carries <b>${pct(g)}</b> of net assets in market exposure (<b>${g.toFixed(2)}x</b>). Largest sleeve: <b>${NM[big[0]].toLowerCase()}</b> at ${pct(D.sleeves[big[0]])}, smallest <b>${NM[big[3]].toLowerCase()}</b> at ${pct(D.sleeves[big[3]])}.</span>` +
+    (D.days < 5 ? `<span>History is short: the first archived file is ${fdate(D.first)}, and changes over a week or more appear as files accumulate.</span>` : "");
+  $("summary").hidden = false;
+
+  // compare selectors, shared
+  function drawCmp() {
+    document.querySelectorAll(".seg.cmp").forEach((el) => {
+      el.hidden = !looks.length;
+      el.innerHTML = looks.map((k) => `<button type="button" data-k="${k}" aria-pressed="${k === cmp}">${LOOK[k]}</button>`).join("");
+    });
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest(".seg.cmp button");
+    if (!b) return;
+    cmp = b.dataset.k; drawCmp(); drawSleeves(); drawMarkets();
+  });
+
+  // sleeves: horizontal bars, a tick for the comparison
+  function drawSleeves() {
+    const keys = [...SLV, "cash"];
+    const then = cmp ? D.sleeves_then[cmp] : null;
+    const max = Math.max(...keys.map((k) => Math.max(D.sleeves[k] || 0, then ? then[k] || 0 : 0)), 0.01);
+    // drawn at the container's own width, so the text stays 12px on a phone
+    const W = Math.max(300, Math.min(760, $("sleeves").clientWidth || 760)), narrow = W < 500;
+    const L = narrow ? 112 : 160, R = narrow ? 128 : 170, rowH = 24, H = keys.length * rowH + 4;
+    const sx = (v) => L + (W - L - R) * Math.max(v, 0) / max;
+    const label = (k) => narrow && k === "inflation" ? "Inflation-linked" : narrow && k === "cash" ? "Cash, collateral" : NM[k];
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Exposure by sleeve">`;
+    keys.forEach((k, i) => {
+      const y = i * rowH, v = D.sleeves[k] || 0, t = then ? then[k] : null;
+      const share = SLV.includes(k) && g ? v / g : null;
+      s += `<text class="nm" x="0" y="${y + 16}">${esc(label(k))}</text>`;
+      s += `<rect x="${L}" y="${y + 6}" width="${Math.max(sx(v) - L, 1)}" height="12" rx="2" fill="${COL[k]}" ${k === "cash" ? 'opacity=".55"' : ""}></rect>`;
+      if (t != null) s += `<rect x="${sx(t) - 1}" y="${y + 2}" width="2" height="20" fill="var(--ink)"></rect>`;
+      s += `<text class="val" x="${sx(v) + 6}" y="${y + 16}">${pct(v)}${t != null ? "  " + pp(v - t) : ""}</text>`;
+      if (share != null) s += `<text class="desc" x="${W}" y="${y + 16}" text-anchor="end">${(share * 100).toFixed(0)}%${narrow ? "" : " of gross"}</text>`;
+    });
+    $("sleeves").innerHTML = s + "</svg>";
+    $("sleeve-legend").innerHTML = cmp ? `<span><i class="tick"></i>${LOOK[cmp]} ago, ${fdate(D.lookbacks[cmp])}${(D.source_of || {})[cmp] === "nport" ? ", from the SEC quarter-end filing" : ""}</span>` : "";
+    $("sleeve-note").innerHTML = `Gross is the four risk sleeves. Shares of gross are of <b>notional</b>, and risk parity balances risk, so the book reads bond heavy by design. Cash and collateral is not exposure.`;
+  }
+
+  // markets: one card per sleeve, each market a compact row with a bar along its foot
+  function drawMarkets() {
+    const max = Math.max(...D.markets.map((r) => Math.abs(r.pct || 0)), 0.01);
+    const order = [...SLV, "other", "cash"];
+    const by = {};
+    for (const r of D.markets) (by[r.sleeve] = by[r.sleeve] || []).push(r);
+    const chg = (d) => d == null ? "" : Math.abs(d) < 5e-4 ? "–" : `<span class="${d > 0 ? "up" : "down"}">${pp(d)}</span>`;
+    $("markets").innerHTML = order.filter((k) => by[k]).map((k) => {
+      const tot = D.sleeves[k], tThen = cmp ? (D.sleeves_then[cmp] || {})[k] : null;
+      const rows = by[k].map((r) => {
+        const t = cmp ? r.then[cmp] : null, d = t != null ? r.pct - t : null;
+        const wid = Math.abs(r.pct || 0) / max * 100;
+        const extra = r.lines > 1 ? `<small>${r.lines} lines</small>` : r.lines === 0 ? "<small>closed</small>" : "";
+        return `<div class="mrow" title="${esc(r.name)}, held as ${esc(r.instrument)}"><span class="nm">${esc(r.name)}${extra}</span>` +
+          `<span class="v">${pct(r.pct, 1)}</span><span class="c">${chg(d)}</span>` +
+          `<i class="b" style="width:${wid.toFixed(1)}%;background:${COL[k]};${r.pct < 0 ? "opacity:.4" : ""}"></i></div>`;
+      }).join("");
+      return `<div class="mcard${k === "cash" ? " cash" : ""}"><h3><span><i class="sw" style="background:${COL[k]}"></i>${esc(NM[k] || k)}</span>` +
+        `<span class="t">${pct(tot)}${tThen != null ? " " + chg(tot - tThen) : ""}</span></h3>${rows}</div>`;
+    }).join("");
+    $("mk-sub").textContent = `${D.markets.filter((r) => r.lines).length} markets on ${fdate(D.as_of)}, % of net assets` + (cmp ? `, change since ${fdate(D.lookbacks[cmp])}` : "");
+  }
+
+  // a line chart over dates, with a hover readout
+  function lineChart(el, dates, series, fmt, opts = {}) {
+    // drawn at the container's own width, so axis text stays the same size in half a row
+    const W = Math.max(300, Math.min(760, el.clientWidth || 760)), H = opts.h || 200, L = 48, R = 12, T = 10, B = 24;
+    const vals = series.flatMap((s) => s.v.filter((x) => x != null));
+    let lo = opts.zero ? Math.min(0, ...vals) : Math.min(...vals), hi = Math.max(...vals);
+    if (hi === lo) { hi += Math.abs(hi) * 0.1 || 1; lo -= Math.abs(lo) * 0.1 || 1; }
+    const pad = (hi - lo) * 0.06; hi += pad; if (!opts.zero) lo -= pad;
+    // round-number gridlines: a step of 1, 2, 2.5 or 5 times a power of ten, about four of them,
+    // and the top of the axis taken up to the next one so the highest line has a label above it
+    const raw = (hi - lo) / 4, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = mag * ([1, 2, 2.5, 5, 10].find((m) => m * mag >= raw) || 10);
+    hi = Math.ceil(hi / step - 1e-9) * step;
+    // opts.time spaces points by date rather than by position, for a history that mixes
+    // quarter-end books with daily ones
+    const n = dates.length, ms = dates.map((d) => Date.parse(d + "T12:00:00Z")), t0 = ms[0], t1 = ms[n - 1];
+    const fx = (i) => n === 1 ? 0.5 : opts.time ? (ms[i] - t0) / (t1 - t0) : i / (n - 1);
+    const sx = (i) => L + (W - L - R) * fx(i), sy = (v) => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+    let s = `<svg viewBox="0 0 ${W} ${H}">`;
+    for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-12; v += step) {
+      const y = sy(v);
+      s += `<line class="gridline" x1="${L}" x2="${W - R}" y1="${y}" y2="${y}"></line><text x="${L - 6}" y="${y + 4}" text-anchor="end">${fmt(v, true)}</text>`;
+    }
+    const ticks = Math.min(n, W < 500 ? 4 : 6);
+    for (let k = 0; k < ticks; k++) {
+      if (opts.time && n > 1) {
+        const t = t0 + (t1 - t0) * (ticks === 1 ? 0 : k / (ticks - 1)), x = L + (W - L - R) * (t - t0) / (t1 - t0);
+        s += `<text x="${x}" y="${H - 6}" text-anchor="middle">${fdate(new Date(t).toISOString().slice(0, 10)).replace(/^\d+ /, "")}</text>`;
+        continue;
+      }
+      const i = ticks === 1 ? 0 : Math.round(k * (n - 1) / (ticks - 1));
+      s += `<text x="${sx(i)}" y="${H - 6}" text-anchor="middle">${fdate(dates[i]).replace(/^\d+ /, "")}</text>`;
+    }
+    for (const se of series) {
+      const pts = se.v.map((v, i) => v == null ? null : `${sx(i).toFixed(1)},${sy(v).toFixed(1)}`).filter(Boolean);
+      if (pts.length > 1) s += `<polyline fill="none" stroke="${se.c}" stroke-width="${se.w || 1.8}" points="${pts.join(" ")}"></polyline>`;
+      const special = (i) => (opts.hollow && opts.hollow[i]) || (opts.square && opts.square[i]);
+      if (n < 30) se.v.forEach((v, i) => { if (v != null && !special(i)) s += `<circle cx="${sx(i)}" cy="${sy(v)}" r="2.6" fill="${se.c}"></circle>`; });
+      if (opts.hollow) se.v.forEach((v, i) => { if (v != null && opts.hollow[i]) s += `<circle cx="${sx(i)}" cy="${sy(v)}" r="3" fill="var(--surface)" stroke="${se.c}" stroke-width="1.4"></circle>`; });
+      if (opts.square) se.v.forEach((v, i) => { if (v != null && opts.square[i]) s += `<rect x="${sx(i) - 2.8}" y="${sy(v) - 2.8}" width="5.6" height="5.6" fill="var(--surface)" stroke="${se.c}" stroke-width="1.4"></rect>`; });
+    }
+    s += `<line id="${el.id}-x" class="zero" x1="0" x2="0" y1="${T}" y2="${H - B}" visibility="hidden"></line><rect class="hitarea" x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent"></rect></svg>`;
+    el.innerHTML = s;
+    const svg = el.querySelector("svg"), tip = $("tip"), cross = el.querySelector("line[id$='-x']");
+    svg.addEventListener("mousemove", (e) => {
+      const r = svg.getBoundingClientRect(), x = (e.clientX - r.left) * W / r.width;
+      const f = (x - L) / (W - L - R);
+      const i = n === 1 ? 0 : opts.time ? ms.reduce((b, t, j) => Math.abs((t - t0) / (t1 - t0) - f) < Math.abs((ms[b] - t0) / (t1 - t0) - f) ? j : b, 0)
+        : Math.max(0, Math.min(n - 1, Math.round(f * (n - 1))));
+      cross.setAttribute("x1", sx(i)); cross.setAttribute("x2", sx(i)); cross.setAttribute("visibility", "visible");
+      tip.innerHTML = `<div class="t">${fdate(dates[i])}${opts.label && opts.label[i] ? " · " + esc(opts.label[i]) : ""}</div>` + series.map((se) => `<div class="rw"><span class="k"><i style="background:${se.c}"></i>${esc(se.n)}</span><b>${fmt(se.v[i])}</b></div>`).join("");
+      tip.hidden = false;
+      tip.style.left = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8) + "px";
+      tip.style.top = (e.clientY + 14) + "px";
+    });
+    svg.addEventListener("mouseleave", () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); });
+  }
+
+  // history of sleeves and gross
+  {
+    const S = D.series, keys = [...SLV, "cash"];
+    const series = [{ n: NM.gross, c: COL.gross, v: S.gross, w: 2.4 }, ...keys.map((k) => ({ n: NM[k], c: COL[k], v: S[k] }))];
+    $("hist-legend").innerHTML = series.map((s) => `<span><i class="ln" style="background:${s.c}"></i>${esc(s.n)}</span>`).join("");
+    const src = S.source || S.dates.map(() => "daily"), hollow = src.map((x) => x === "nport"), square = src.map((x) => x === "exposure");
+    const SRC = { nport: "SEC N-PORT", exposure: "exposure sheet", daily: "holdings file" };
+    const un = D.unsized || [];
+    $("hist-sub").textContent = `% of net assets, one point per book` + (hollow.some(Boolean) ? `; hollow points are quarter ends from SEC filings` : "") +
+      (square.some(Boolean) ? `; squares are month ends from State Street's exposure sheet (no cash line)` : "") +
+      (un.length ? ` · commodities and gross left out on ${un.length} early file${un.length === 1 ? "" : "s"} that do not size the swap` : "") +
+      (D.estimated.length ? ` · ${D.estimated.length} on estimated net assets` : "");
+    const drawHist = () => {
+      if (S.dates.length < 2) $("hist").innerHTML = `<p class="empty">One file so far (${fdate(D.first)}). The lines start with the second archived file.</p>`;
+      else lineChart($("hist"), S.dates, series, (v) => pct(v, 0), { zero: true, time: true, hollow, square, label: src.map((x) => SRC[x] || "holdings file") });
+    };
+    drawHist();
+    window.addEventListener("resize", () => { clearTimeout(drawHist.t); drawHist.t = setTimeout(drawHist, 150); });
+  }
+
+  // fund size from the NAV history, since launch
+  {
+    const N = D.navhist;
+    let basis = "tna";
+    const draw = () => {
+      if (!N.dates.length) { $("size").innerHTML = '<p class="empty">No NAV history archived.</p>'; return; }
+      if (basis === "tna") lineChart($("size"), N.dates, [{ n: "Net assets", c: "var(--accent)", v: N.tna }], (v, ax) => v == null ? "–" : (v >= 1000 ? "$" + (v / 1000).toFixed(ax ? 1 : 2) + "bn" : "$" + v.toFixed(ax ? 0 : 1) + "M"), { zero: true });
+      else lineChart($("size"), N.dates, [{ n: "NAV per share", c: "var(--accent)", v: N.nav }], (v) => v == null ? "–" : "$" + v.toFixed(2));
+      const first = N.nav[0], lastv = N.nav[N.nav.length - 1];
+      $("size-sub").textContent = `Daily since ${fdate(N.dates[0])} · NAV ${first.toFixed(2)} to ${lastv.toFixed(2)}, distributions not added back`;
+    };
+    $("size-basis").addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      basis = b.dataset.v;
+      $("size-basis").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+      draw();
+    });
+    draw();
+    window.addEventListener("resize", () => { clearTimeout(draw.t); draw.t = setTimeout(draw, 150); });
+  }
+
+  // holdings, line by line: the largest lines shown, the rest behind a toggle
+  {
+    const kind = { future: "future", swap: "swap", etf: "ETF", tips: "TIPS", mmf: "money fund", bill: "T-bill", cash: "cash", fx: "currency", other: "other" };
+    let h = `<thead><tr><th>Name</th><th>Ticker</th><th>Type</th><th class="r">Market value</th><th class="r">Notional</th><th class="r">Weight (file)</th><th class="r">Exposure</th></tr></thead><tbody>`;
+    const SHOW = 10;
+    D.holdings.forEach((x, i) => {
+      h += `<tr${x.sleeve === "cash" ? ' class="cash"' : ""}${i >= SHOW ? " data-more hidden" : ""}><td>${esc(x.name)}</td><td class="m">${esc(x.ticker)}</td><td class="vn">${kind[x.kind] || x.kind}</td>` +
+        `<td class="r m">${usd(x.market_value)}</td><td class="r m">${x.notional == null ? "" : usd(x.notional)}</td>` +
+        `<td class="r m">${x.weight == null ? "" : x.weight.toFixed(2) + "%"}</td><td class="r m">${pct(x.pct, 2)}</td></tr>`;
+    });
+    $("holdings").innerHTML = h + "</tbody>";
+    const more = $("hold-more"), rest = D.holdings.length - SHOW;
+    if (rest > 0) {
+      let open = false;
+      const label = () => { more.textContent = open ? "Show fewer" : `Show all ${D.holdings.length} lines`; };
+      more.hidden = false; label();
+      more.addEventListener("click", () => {
+        open = !open; label();
+        $("holdings").querySelectorAll("tr[data-more]").forEach((tr) => { tr.hidden = !open; });
+      });
+    }
+    $("hold-sub").textContent = `${D.holdings.length} lines in the file as of ${fdate(D.as_of)}. Weight is as printed. For futures and the swap it is margin or profit and loss, so exposure uses notional.`;
+  }
+
+  // performance, as State Street publishes it (the other monitors' Performance panel)
+  (function drawPerf() {
+    const P = D.fund;
+    if (!P || !P.tables || !P.tables.length) return;
+    $("perf-panel").hidden = false;
+    const d = P.daily || {}, cols = ["1 month", "QTD", "YTD", "1 year", "Since inception"];
+    const spc = (x, dp = 1) => x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x * 100).toFixed(dp) + "%";
+    const sub = [];
+    if (d.nav != null) sub.push(`NAV $${d.nav.toFixed(2)}${d.nav_chg != null ? " (" + spc(d.nav_chg, 2) + ")" : ""}`);
+    if (d.price != null) sub.push(`price $${d.price.toFixed(2)}${d.price_chg != null ? " (" + spc(d.price_chg, 2) + ")" : ""}`);
+    if (d.premium != null) sub.push(`${d.premium < 0 ? "discount" : "premium"} ${Math.abs(d.premium * 100).toFixed(2)}%`);
+    $("perf-sub").textContent = (d.as_of ? fdate(d.as_of) + ": " : "") + sub.join(" · ");
+    const SHORT = { "1 month": "1M", "1 year": "1Y", "Since inception": "Launch" };
+    const short = (iso) => fdate(iso).replace(/ \d{4}$/, "");
+    let h = `<thead><tr><th>Total return</th>` + cols.map((k) => `<th class="r">${esc(SHORT[k] || k)}</th>`).join("") + `</tr></thead><tbody>`;
+    for (const T of P.tables) {
+      h += `<tr><td>NAV to ${short(T.as_of)}</td>` + cols.map((k) => `<td class="r m">${spc(T.nav[k])}</td>`).join("") + `</tr>`;
+      if (T.index) h += `<tr class="cash"><td>${esc((P.index_name || "Benchmark").replace(/^MSCI /, ""))}</td>` + cols.map((k) => `<td class="r m">${spc(T.index[k])}</td>`).join("") + `</tr>`;
+    }
+    $("perf-table").innerHTML = h + "</tbody>";
+    const note = [`To the last month end and quarter end. Launch (${P.inception ? fdate(P.inception) : "March 2025"}) is annualized, shorter periods are not. Benchmark: ${esc(P.index_name || "as the fund names it")}, the fund's own choice and an all-equity index.`];
+    if (P.expense_ratio != null) note.push(`Expense ratio ${(P.expense_ratio * 100).toFixed(2)}%.`);
+    note.push(`Price is NAV times one plus the published premium. Source: <a href="${esc(P.source)}" rel="noopener">the fund's page</a>. Past performance, not investment advice.`);
+    $("perf-note").innerHTML = note.join(" ");
+  })();
+
+  // against other funds: the same market-price total return for every line
+  (function drawPeers() {
+    const Q = D.peers;
+    if (!Q || !Q.stats || Q.stats.length < 2) return;
+    $("peer-panel").hidden = false;
+    const PC = { ALLW: "var(--ink)", RPAR: "var(--commodity)", AOR: "var(--equity)", SPY: "var(--muted)" };
+    const spc = (x, dp = 1) => x == null ? "–" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x * 100).toFixed(dp) + "%";
+    const series = Q.stats.map((s) => ({ n: s.name, c: PC[s.ticker] || "var(--muted)", v: Q.lines[s.ticker], w: s.ticker === "ALLW" ? 2.4 : 1.6 }));
+    $("peer-sub").textContent = `Total return at market price, distributions reinvested, ${fdate(Q.from)} to ${fdate(Q.to)}`;
+    $("peer-legend").innerHTML = series.map((s) => `<span><i class="ln" style="background:${s.c}"></i>${esc(s.n)}</span>`).join("");
+    const draw = () => lineChart($("peer-chart"), Q.dates, series, (v) => spc(v, 0), { zero: true, time: true, h: 220 });
+    draw();
+    window.addEventListener("resize", () => { clearTimeout(draw.t); draw.t = setTimeout(draw, 150); });
+    const ann = Q.stats.some((s) => s.annual != null);
+    $("peer-table").innerHTML = `<thead><tr><th></th><th class="r">Since ${esc(fdate(Q.from).replace(/^\d+ /, ""))}</th>${ann ? '<th class="r">Per year</th>' : ""}<th class="r">YTD</th><th class="r">1 year</th><th class="r">Volatility</th><th class="r">Worst drop</th><th class="r">Correlation with ALLW</th></tr></thead><tbody>` +
+      Q.stats.map((s) => `<tr${s.ticker === "ALLW" ? "" : ' class="cash"'}><td><b>${esc(s.name)}</b></td><td class="r m">${spc(s.total)}</td>${ann ? `<td class="r m">${spc(s.annual)}</td>` : ""}<td class="r m">${spc(s.ytd)}</td><td class="r m">${spc(s.year)}</td><td class="r m">${pct(s.vol)}</td><td class="r m">${spc(s.worst)}</td><td class="r m">${s.corr == null ? "–" : s.corr.toFixed(2)}</td></tr>`).join("") + "</tbody>";
+    $("peer-note").innerHTML = `RPAR runs the same four sleeves at lower leverage (about 1.2 times net assets against ALLW's 1.9), with US-only bonds and commodity producer stocks where ALLW holds commodity futures. AOR is a fixed 60/40 of stocks and bonds: the plain balanced portfolio a risk parity fund is meant to improve on. Volatility is annualized from daily returns, correlation is day to day. Under two years of history, so these gaps are mostly noise. Prices from Yahoo. Past performance, not investment advice.`;
+  })();
+
+  $("how-toggle").addEventListener("click", (e) => {
+    const g2 = $("how-guide"), open = g2.hidden;
+    g2.hidden = !open; e.target.setAttribute("aria-expanded", open); e.target.textContent = open ? "Hide" : "Show";
+  });
+
+  drawCmp(); drawSleeves(); drawMarkets();
+  let rw = 0;
+  window.addEventListener("resize", () => { clearTimeout(rw); rw = setTimeout(drawSleeves, 120); });
+  $("foot").innerHTML = `Built ${esc(D.generated_at.replace("T", " "))} from State Street's published <a href="${esc(D.source)}">holdings file</a> and <a href="${esc(D.nav_source)}">NAV history</a>. All Weather is a trademark of Bridgewater Associates.`;
+})();
+</script>
+<script>(function(){var i=new Image();i.src="https://bluemagicai.com/seen.gif?p=allw&r="+encodeURIComponent(document.referrer);})();</script>
+<noscript><img src="https://bluemagicai.com/seen.gif?p=allw" alt="" width="1" height="1"></noscript>
+<script>window.goatcounter={path:"/allw"};</script>
+<script data-goatcounter="https://stats.bluemagicai.com/count" async src="https://stats.bluemagicai.com/count.js"></script>
+</body></html>
